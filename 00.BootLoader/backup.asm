@@ -122,7 +122,7 @@ READDATA:                   ;start code that read disk
     mov al, byte [SECTORNUMBER]
     add al, 0x1
     mov byte [SECTORNUMBER], al
-    cmp al, 37
+    cmp al, 19
     jl READDATA
 
     xor byte [HEADNUMBER], 0x01
