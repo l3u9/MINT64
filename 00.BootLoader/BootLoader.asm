@@ -8,7 +8,8 @@ jmp 0x07c0:START ;copy 0x07c0 to CS segment and jump START LABLE
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; MINT64 OS env value
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-TOTALSECTORCOUNT: dw 1024
+;TOTALSECTORCOUNT: dw 1024
+TOTALSECTORCOUNT: dw 1
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
