@@ -1,1 +1,4 @@
 study "Makefile" synth
+
+Part1 review
+
