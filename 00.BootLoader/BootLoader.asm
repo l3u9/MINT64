@@ -9,7 +9,9 @@ jmp 0x07c0:START ;copy 0x07c0 to CS segment and jump START LABLE
 ; MINT64 OS env value
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;TOTALSECTORCOUNT: dw 1024
-TOTALSECTORCOUNT: dw 1
+TOTALSECTORCOUNT: dw 0x02
+
+KERNEL32SECTORCOUNT: dw 0x02 ;보호 모드 커널의 총 섹터 수
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

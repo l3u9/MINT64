@@ -5,6 +5,7 @@ ImageMaker: ImageMaker.c
 	cp $@ ../../
 
 pyImageMaker:
+	@echo ==================== pyImageMaker Build ====================
 	cp ImageMaker.py ImageMaker
 	chmod +x ./ImageMaker
 	mv ./ImageMaker ../../
