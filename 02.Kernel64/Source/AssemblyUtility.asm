@@ -3,6 +3,7 @@
 SECTION .text
 
 global kInPortByte, kOutPortByte, kLoadGDTR, kLoadTR, kLoadIDTR
+global kEnableInterrupt, kDisableInterrupt, kReadRFLAGS
 
 ;포트로부터 1바이트 읽음
 kInPortByte:
@@ -43,4 +44,17 @@ kLoadIDTR:
     ret
 
 
+kEnableInterrupt:
+    sti
+    ret
+
+kDisableInterrupt:
+    cli
+    ret
+
+kReadRFLAGS:
+    pushfq
+    pop rax
+
+    ret
 
