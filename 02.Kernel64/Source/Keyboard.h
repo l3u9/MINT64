@@ -5,7 +5,7 @@
 
 //매크로
 // puase 키를 처리하기 위해 무시해야 하는 나머지 스캔의 코드 수
-#define KEY_SKIPCOUNTFORAUSE    2
+#define KEY_SKIPCOUNTFORPAUSE    2
 
 //키 상태에 대한 플래그
 #define KEY_FLAGS_UP            0x00
@@ -78,6 +78,9 @@ typedef struct kKeyboardManagerStruct
     int iSkipCountForPause;
 
 }KEYBOARDMANAGER;
+
+#pragma pack( pop )
+
 
 BOOL kIsOutputBufferFull(void);
 BOOL kIsInputBufferFull(void);

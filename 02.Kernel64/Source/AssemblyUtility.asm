@@ -2,7 +2,7 @@
 
 SECTION .text
 
-global kInPortByte, kOutPortByte
+global kInPortByte, kOutPortByte, kLoadGDTR, kLoadTR, kLoadIDTR
 
 ;포트로부터 1바이트 읽음
 kInPortByte:
@@ -28,4 +28,19 @@ kOutPortByte:
     pop rax
     pop rdx
     ret
-    
+
+
+kLoadGDTR:
+    lgdt [rdi];
+    ret
+
+kLoadTR:
+    ltr di
+    ret
+
+kLoadIDTR:
+    lidt [rdi]
+    ret
+
+
+

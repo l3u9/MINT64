@@ -42,11 +42,11 @@ BOOL kActivateKeyboard(void)
             if(kIsOutputBufferFull() == TRUE)
                 break;
         }
+    
+
+        if(kInPortByte(0x60) == 0xfa)
+            return TRUE;
     }
-
-    if(kInPortByte(0x60) == 0xfa)
-        return TRUE;
-
     return FALSE;
 
 }
@@ -373,11 +373,11 @@ BOOL kConvertScanCodeToASCIICode(BYTE bScanCode, BYTE* pbASCIICode, BOOL* pbFlag
         return FALSE;
     }
 
-    if(bScanCode = 0xe1)
+    if(bScanCode == 0xe1)
     {
         *pbASCIICode = KEY_PAUSE;
-        pbFlags = KEY_FLAGS_DOWN;
-        gs_stKeyboardManager.iSkipCountForPause = KEY_SKIPCOUNTFORAUSE;
+        *pbFlags = KEY_FLAGS_DOWN;
+        gs_stKeyboardManager.iSkipCountForPause = KEY_SKIPCOUNTFORPAUSE;
         return TRUE;
     }
     else if(bScanCode == 0xe0)
@@ -400,7 +400,9 @@ BOOL kConvertScanCodeToASCIICode(BYTE bScanCode, BYTE* pbASCIICode, BOOL* pbFlag
         gs_stKeyboardManager.bExtendedCodeIn = FALSE;
     }
     else
+    {
         *pbFlags = 0;
+    }
 
     if((bScanCode & 0x80) == 0)
         *pbFlags |= KEY_FLAGS_DOWN;

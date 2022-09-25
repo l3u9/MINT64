@@ -14,28 +14,31 @@ void Main(void)
     DWORD dwEAX, dwEBX, dwECX, dwEDX;
     char vcVendorString[13] = {0, };
 
-    kPrintString(0, 3, "Protected Mode C Language Kernel Start......[Pass]");
+    kPrintString( 0, 3, "Protected Mode C Language Kernel Start......[Pass]" );
+    kPrintString( 0, 4, "Minimum Memory Size Check...................[    ]" );
+
     if(kIsMemoryEnough() == FALSE)
     {
-        kPrintString(45, 4, "Fail");
-        kPrintString(0, 5, "Not Enough Memory~!! MINT64 OS Requires Over 64Mbyte Memory~!!");
+        kPrintString( 45, 4, "Fail" );
+        kPrintString( 0, 5, "Not Enough Memory~!! MINT64 OS Requires Over "
+                "64Mbyte Memory~!!" );
         while(1);
     }
     else
     {
-        kPrintString(45, 4, "Pass");
+        kPrintString( 45, 4, "Pass" );
     }
 
-    kPrintString(0, 5, "IA-32e Kernel Area Initialize................[  ]");
+    kPrintString( 0, 5, "IA-32e Kernel Area Initialize...............[    ]" );
     if(kInitializeKernel64Area() == FALSE)
     {
         kPrintString(45, 5, "Fail");
-        kPrintString(0, 6, "Kernel Area Initialization Fail~!!");
+        kPrintString( 0, 6, "Kernel Area Initialization Fail~!!" );
         while(1);
 
     }
     
-    kPrintString(45, 5, "Pass");
+    kPrintString( 45, 5, "Pass" );
     
     //IA-32e 모드 커널을 위한 페이지 테이블 생성
     kPrintString(0, 6, "IA-32e Page Tables Initialize...............[  ]");
