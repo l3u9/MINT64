@@ -1,93 +1,192 @@
+// #include "Types.h"
+// #include "Keyboard.h"
+// #include "Descriptor.h"
+// #include "PIC.h"
+
+
+// //?ï®?àò ?Ñ†?ñ∏
+// void kPrintString( int iX, int iY, const char* pcString);
+
+// // ?ïÑ?ûò ?ï®?àò?äî C?ñ∏?ñ¥ Ïª§ÎÑê?ùò ?ãú?ûë Î∂?Î∂?
+// void Main(void)
+// {
+
+//     char vcTemp[2] = {0, };
+//     BYTE bFlags;
+//     BYTE bTemp;
+//     int i = 0;
+//     KEYDATA stData;
+
+
+//     kPrintString( 0, 10, "Switch To IA-32e Mode Success~!!" );
+//     kPrintString( 0, 11, "IA-32e C Language Kernel Start..............[Pass]" );
+    
+//     kPrintString( 0, 12, "GDT Initialize And Switch For IA-32e Mode...[    ]" );
+//     kInitializeGDTTableAndTSS();
+//     kLoadGDTR( GDTR_STARTADDRESS );
+//     kPrintString( 45, 12, "Pass" );
+    
+//     kPrintString( 0, 13, "TSS Segment Load............................[    ]" );
+//     kLoadTR( GDT_TSSSEGMENT );
+//     kPrintString( 45, 13, "Pass" );
+    
+//     kPrintString( 0, 14, "IDT Initialize..............................[    ]" );
+//     kInitializeIDTTables();    
+//     kLoadIDTR( IDTR_STARTADDRESS );
+//     kPrintString( 45, 14, "Pass" );
+    
+//     // kPrintString( 0, 15, "Keyboard Activate...........................[    ]" );
+//     kPrintString( 0, 15, "Keyboard Activate And Queue Initialize......[    ]" );
+
+
+
+//     // if(kActivateKeyboard() == TRUE)
+//     if(kInitializeKeyboard() == TRUE)
+//     {
+//         kPrintString(45,15,"Pass");
+//         kChangeKeyboardLED(FALSE, FALSE, FALSE);
+//     }
+//     else
+//     {
+//         kPrintString(45, 15, "Fail");
+//         while(1);
+//     }
+
+//     kPrintString(0, 16, "PIC Controller And Interrupt Initialize.....[    ]");
+//     kInitializePIC();
+//     kMaskPICInterrupt(0);
+//     kEnableInterrupt();
+//     kPrintString(45, 16, "Pass");
+    
+
+//     while(1)
+//     {
+//         if(kGetKeyFromKeyQueue(&stData) == TRUE)
+//         {
+
+            
+//             if(stData.bFlags & KEY_FLAGS_DOWN)
+//             {
+//                 vcTemp[0] = stData.bASCIICode;
+//                 kPrintString(i++, 17, vcTemp);
+
+//                 if(vcTemp[0] == '0')
+//                 {
+//                     bTemp = bTemp / 0;
+//                 }
+//             }
+    
+//         }
+//     }
+
+// }
+
+// void kPrintString(int iX, int iY, const char* pcString)
+// {
+//     CHARACTER* pstScreen = (CHARACTER*) 0xb8000;
+//     int i;
+    
+//     pstScreen += (iY * 80) + iX;
+
+//     for(i = 0; pcString[i] != 0; i++)
+//     {
+//         pstScreen[i].bCharactor = pcString[i];
+//     }
+// }
 #include "Types.h"
 #include "Keyboard.h"
 #include "Descriptor.h"
 #include "PIC.h"
 
+// «‘ºˆ º±æ
+void kPrintString( int iX, int iY, const char* pcString );
 
-//Ìï®Ïàò ÏÑ†Ïñ∏
-void kPrintString( int iX, int iY, const char* pcString);
-
-// ÏïÑÎûò Ìï®ÏàòÎäî CÏñ∏Ïñ¥ Ïª§ÎÑêÏùò ÏãúÏûë Î∂ÄÎ∂Ñ
-void Main(void)
+/**
+ *  æ∆∑° «‘ºˆ¥¬ C ææÓ ƒø≥Œ¿« Ω√¿€ ∫Œ∫–¿”
+ */
+void Main( void )
 {
-
-    char vcTemp[2] = {0, };
-    BYTE bFlags;
+    char vcTemp[ 2 ] = { 0, };
     BYTE bTemp;
     int i = 0;
-
+    KEYDATA stData;
 
     kPrintString( 0, 10, "Switch To IA-32e Mode Success~!!" );
     kPrintString( 0, 11, "IA-32e C Language Kernel Start..............[Pass]" );
-    
+
     kPrintString( 0, 12, "GDT Initialize And Switch For IA-32e Mode...[    ]" );
     kInitializeGDTTableAndTSS();
     kLoadGDTR( GDTR_STARTADDRESS );
     kPrintString( 45, 12, "Pass" );
-    
+
     kPrintString( 0, 13, "TSS Segment Load............................[    ]" );
     kLoadTR( GDT_TSSSEGMENT );
     kPrintString( 45, 13, "Pass" );
-    
+
     kPrintString( 0, 14, "IDT Initialize..............................[    ]" );
-    kInitializeIDTTables();    
+    kInitializeIDTTables();
     kLoadIDTR( IDTR_STARTADDRESS );
     kPrintString( 45, 14, "Pass" );
-    
-    kPrintString( 0, 15, "Keyboard Activate...........................[    ]" );
 
-
-
-    if(kActivateKeyboard() == TRUE)
+    kPrintString( 0, 15, "Keyboard Activate And Queue Initialize......[    ]" );
+    // ≈∞∫∏µÂ∏¶ »∞º∫»≠
+    if( kInitializeKeyboard() == TRUE )
     {
-        kPrintString(45,15,"Pass");
-        kChangeKeyboardLED(FALSE, FALSE, FALSE);
+        kPrintString( 45, 15, "Pass" );
+        kChangeKeyboardLED( FALSE, FALSE, FALSE );
     }
     else
     {
-        kPrintString(45, 15, "Fail");
-        while(1);
+        kPrintString( 45, 15, "Fail" );
+        while( 1 ) ;
     }
 
-    kPrintString(0, 16, "PIC Controller And Interrupt Initialize.....[    ]");
+    kPrintString( 0, 16, "PIC Controller And Interrupt Initialize.....[    ]" );
+    // PIC ƒ¡∆Æ∑—∑Ø √ ±‚»≠ π◊ ∏µÁ ¿Œ≈Õ∑¥∆Æ »∞º∫»≠
     kInitializePIC();
-    kMaskPICInterrupt(0);
+    kMaskPICInterrupt( 0 );
     kEnableInterrupt();
-    kPrintString(45, 16, "Pass");
-    
+    kPrintString( 45, 16, "Pass" );
 
-    while(1)
+    while( 1 )
     {
-        if(kIsOutputBufferFull() == TRUE)
+        // ≈∞ ≈•ø° µ•¿Ã≈Õ∞° ¿÷¿∏∏È ≈∞∏¶ √≥∏Æ«‘
+        if( kGetKeyFromKeyQueue( &stData ) == TRUE )
         {
-            bTemp = kGetKeyboardScanCode();
-
-            if(kConvertScanCodeToASCIICode(bTemp, &(vcTemp[0]), &bFlags) == TRUE)
+            // ≈∞∞° ¥≠∑Ø¡≥¿∏∏È ≈∞¿« ASCII ƒ⁄µÂ ∞™¿ª »≠∏Èø° √‚∑¬
+            if( stData.bFlags & KEY_FLAGS_DOWN )
             {
-                if(bFlags & KEY_FLAGS_DOWN)
-                {
-                    kPrintString(i++, 17, vcTemp);
+                // ≈∞ µ•¿Ã≈Õ¿« ACII ƒ⁄µÂ ∞™¿ª ¿˙¿Â
+                vcTemp[ 0 ] = stData.bASCIICode;
+                kPrintString( i++, 17, vcTemp );
 
-                    if(vcTemp[0] == '0')
-                    {
-                        bTemp = bTemp / 0;
-                    }
+                // 0¿Ã ¿‘∑¬µ«∏È ∫Øºˆ∏¶ 0¿∏∑Œ ≥™¥©æÓ Divide Error øπø‹(∫§≈Õ 0π¯)¿ª
+                // πﬂª˝Ω√≈¥
+                if( vcTemp[ 0 ] == '0' )
+                {
+                    // æ∆∑° ƒ⁄µÂ∏¶ ºˆ«‡«œ∏È Divide Error øπø‹∞° πﬂª˝«œø©
+                    // ƒø≥Œ¿« ¿”Ω√ «⁄µÈ∑Ø∞° ºˆ«‡µ 
+                    bTemp = bTemp / 0;
                 }
             }
         }
     }
-
 }
 
-void kPrintString(int iX, int iY, const char* pcString)
+/**
+ *  πÆ¿⁄ø≠¿ª X, Y ¿ßƒ°ø° √‚∑¬
+ */
+void kPrintString( int iX, int iY, const char* pcString )
 {
-    CHARACTER* pstScreen = (CHARACTER*) 0xb8000;
+    CHARACTER* pstScreen = ( CHARACTER* ) 0xB8000;
     int i;
-    
-    pstScreen += (iY * 80) + iX;
 
-    for(i = 0; pcString[i] != 0; i++)
+    // X, Y ¡¬«•∏¶ ¿ÃøÎ«ÿº≠ πÆ¿⁄ø≠¿ª √‚∑¬«“ æÓµÂ∑πΩ∫∏¶ ∞ËªÍ
+    pstScreen += ( iY * 80 ) + iX;
+
+    // NULL¿Ã ≥™ø√ ∂ß±Ó¡ˆ πÆ¿⁄ø≠ √‚∑¬
+    for( i = 0 ; pcString[ i ] != 0 ; i++ )
     {
-        pstScreen[i].bCharactor = pcString[i];
+        pstScreen[ i ].bCharactor = pcString[ i ];
     }
 }

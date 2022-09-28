@@ -3,16 +3,16 @@
 
 #include "Types.h"
 
-//ë§¤í¬ë¡œ
-// puase í‚¤ë¥¼ ì²˜ë¦¬í•˜ê¸° ìœ„í•´ ë¬´ì‹œí•´ì•¼ í•˜ëŠ” ë‚˜ë¨¸ì§€ ìŠ¤ìº”ì˜ ì½”ë“œ ìˆ˜
+//ë§¤í¬ë¡?
+// puase ?‚¤ë¥? ì²˜ë¦¬?•˜ê¸? ?œ„?•´ ë¬´ì‹œ?•´?•¼ ?•˜?Š” ?‚˜ë¨¸ì?? ?Š¤ìº”ì˜ ì½”ë“œ ?ˆ˜
 #define KEY_SKIPCOUNTFORPAUSE    2
 
-//í‚¤ ìƒíƒœì— ëŒ€í•œ í”Œë˜ê·¸
+//?‚¤ ?ƒ?ƒœ?— ????•œ ?”Œ?˜ê·?
 #define KEY_FLAGS_UP            0x00
 #define KEY_FLAGS_DOWN          0x01
 #define KEY_FLAGS_EXTENDEDKEY   0x02
 
-// ìŠ¤ìº” ì½”ë“œ ë§¤í•‘ í…Œì´ë¸”ì— ëŒ€í•œ ë§¤í¬ë¡œ
+// ?Š¤ìº? ì½”ë“œ ë§¤í•‘ ?…Œ?´ë¸”ì— ????•œ ë§¤í¬ë¡?
 #define KEY_MAPPINGTABLEMAXCOUNT    89
 
 #define KEY_NONE        0x00
@@ -54,15 +54,16 @@
 #define KEY_F12         0x9F
 #define KEY_PAUSE       0xA0
 
+#define KEY_MAXQUEUECOUNT 100
 #pragma pack(push, 1)
 
-//ìŠ¤ìº” ì½”ë“œ í…Œì´ë¸”ì„ êµ¬ì„±í•˜ëŠ” í•­ëª©
+//?Š¤ìº? ì½”ë“œ ?…Œ?´ë¸”ì„ êµ¬ì„±?•˜?Š” ?•­ëª?
 typedef struct kKeyMappingEntryStruct
 {
-    //Shift í‚¤ë‚˜ caps lock í‚¤ë‘ ì¡°í•©ë˜ì§€ ì•ŠëŠ” ascii
+    //Shift ?‚¤?‚˜ caps lock ?‚¤?‘ ì¡°í•©?˜ì§? ?•Š?Š” ascii
     BYTE bNormalCode;
 
-    //Shift í‚¤ë‚˜ caps lock í‚¤ì™€ ì¡°í•©ëœ ASCII ì½”ë“œ
+    //Shift ?‚¤?‚˜ caps lock ?‚¤??? ì¡°í•©?œ ASCII ì½”ë“œ
     BYTE bCombinedCode;
 
 } KEYMAPPINGENTRY;
@@ -78,6 +79,14 @@ typedef struct kKeyboardManagerStruct
     int iSkipCountForPause;
 
 }KEYBOARDMANAGER;
+
+typedef struct kKeyDataStruct
+{
+    BYTE bScanCode;
+    BYTE bASCIICode;
+    BYTE bFlags;
+}KEYDATA;
+
 
 #pragma pack( pop )
 
@@ -95,6 +104,10 @@ BOOL kIsNumberPadScanCode(BYTE bScanCode);
 BOOL kIsUseCombinedCode(BYTE bScanCode);
 void UpdateCombinationKeyStatusAndLED(BYTE bScanCode);
 BOOL kConvertScanCodeToASCIICode(BYTE bScanCode, BYTE* pbASCIICODE, BOOL* pbFlags);
+BOOL kInitializeKeyboard(void);
+BOOL kConvertScanCodeAndPutQueue(BYTE bScanCode);
+BOOL kGetKeyFromKeyQueue(KEYDATA* pstData);
+BOOL kWaitForACKAndPutOtherScanCode(void);
 
 #endif
 

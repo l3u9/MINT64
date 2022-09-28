@@ -11,6 +11,7 @@ void kLoadIDTR( QWORD qwIDTRAddress);
 void kEnableInterrupt(void);
 void kDisableInterrupt(void);
 QWORD kReadRFLAGS(void);
+BOOL kSetInterruptFlag(BOOL bEnableInterrupt);
 
 
 #endif
