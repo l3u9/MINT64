@@ -56,7 +56,6 @@ BOOL kWaitForACKAndPutOtherScanCode(void)
 BOOL kActivateKeyboard(void)
 {
     int i, j;
-    //0xae ?‚¤ë³´ë“œ ?™œ?„±?™” ë°”ì´?Š¸
  
     BOOL bPreviousInterrupt;
     BOOL bResult;
@@ -70,7 +69,7 @@ BOOL kActivateKeyboard(void)
         if(kIsInputBufferFull() == FALSE)
             break;
     }
-    //0xf4 ?‚¤ë³´ë“œ ?™œ?„±?™” ë°”ì´?Š¸
+
     kOutPortByte(0x60, 0xf4);
 
     bResult = kWaitForACKAndPutOtherScanCode();

@@ -14,6 +14,7 @@ typedef struct kQueueManagerStruct
     int iGetIndex;
 
     BOOL bLastPoerationPut;
+    // BOOL bLastOperationPut;
 }QUEUE;
 
 void kInitializeQueue(QUEUE* pstQueue, void* pvQueueBuffer, int iMaxDataCount, int iDataSize);
