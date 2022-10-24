@@ -12,6 +12,7 @@ void kEnableInterrupt(void);
 void kDisableInterrupt(void);
 QWORD kReadRFLAGS(void);
 BOOL kSetInterruptFlag(BOOL bEnableInterrupt);
+QWORD kReadTSC(void);
 
 
 #endif
