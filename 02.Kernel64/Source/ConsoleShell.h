@@ -12,8 +12,8 @@ typedef void (* CommandFunction) (const char* pcParameter);
 
 typedef struct kShellCommandEntryStruct
 {
-    char *pcComand;
-    // char *pcCommand;
+    // char *pcComand;
+    char *pcCommand;
 
     char *pcHelp;
 
