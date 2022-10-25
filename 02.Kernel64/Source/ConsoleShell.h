@@ -4,7 +4,7 @@
 #include "Types.h"
 
 #define CONSOLESHELL_MAXCOMMANDBUFFERCOUNT  300
-#define CONSOLESHELL_PROMPTMESSAGE          "MINT64>"
+#define CONSOLESHELL_PROMPTMESSAGE          "13u9> "
 
 typedef void (* CommandFunction) (const char* pcParameter);
 
@@ -44,6 +44,7 @@ void kWaitUsingPIT(const char* pcParameterBuffer);
 void kReadTimeStampCounter(const char* pcParameterBuffer);
 void kMeasureProcessorSpeed(const char* pcParameterBuffer);
 void kShowDateAndTime(const char* pcParameterBuffer);
+void kCreateTestTask(const char* pcParameterBuffer);
 
 
 #endif
