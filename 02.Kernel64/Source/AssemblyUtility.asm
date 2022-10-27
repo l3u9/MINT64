@@ -5,7 +5,7 @@ SECTION .text
 global kInPortByte, kOutPortByte, kLoadGDTR, kLoadTR, kLoadIDTR
 global kEnableInterrupt, kDisableInterrupt, kReadRFLAGS
 global kReadTSC
-global kSwitchContext
+global kSwitchContext, kHlt
 
 ;포트로부터 1바이트 읽음
 kInPortByte:
@@ -170,3 +170,8 @@ kSwitchContext:
 
     iretq
     
+
+kHlt:
+    hlt
+    hlt
+    ret

@@ -9,7 +9,7 @@
 #include "PIT.h"
 
 /**
- *  �Ʒ� �Լ��� C ��� Ŀ���� ���� �κ���
+ *  �Ʒ� �Լ��� C ���? Ŀ���� ���� �κ���
  */
 void Main( void )
 {
@@ -21,7 +21,7 @@ void Main( void )
     kPrintf( "IA-32e C Language Kernel Start..............[Pass]\n" );
     kPrintf( "Initialize Console..........................[Pass]\n" );
 
-    // ���� ��Ȳ�� ȭ�鿡 ���
+    // ���� ��Ȳ�� ȭ�鿡 ���?
     kGetCursor( &iCursorX, &iCursorY );
     kPrintf( "GDT Initialize And Switch For IA-32e Mode...[    ]" );
     kInitializeGDTTableAndTSS();
@@ -67,13 +67,14 @@ void Main( void )
     }
 
     kPrintf( "PIC Controller And Interrupt Initialize.....[    ]" );
-    // PIC ��Ʈ�ѷ� �ʱ�ȭ �� ��� ���ͷ�Ʈ Ȱ��ȭ
+    // PIC ��Ʈ�ѷ� �ʱ�ȭ �� ���? ���ͷ�Ʈ Ȱ��ȭ
     kInitializePIC();
     kMaskPICInterrupt( 0 );
     kEnableInterrupt();
     kSetCursor( 45, iCursorY++ );
     kPrintf( "Pass\n" );
 
-    // ���� ����
+    // ?��?�� ?��?��?���? ?��?��?���? ?�� ?��?��
+    kCreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_IDLE, (QWORD)kIdleTask);
     kStartConsoleShell();
 }

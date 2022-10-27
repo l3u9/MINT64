@@ -17,22 +17,22 @@ void kSetCursor(int iX, int iY)
 
     iLinearValue = iY * CONSOLE_WIDTH + iX;
 
-    // CRTC μ»¨νΈλ΅¤ μ–΄λ“λ μ¤ λ μ§€μ¤ν„°(ν¬νΈ 0x3d4)μ— 0x0Eλ¥Ό μ „μ†΅ν•μ—¬
-    // μƒμ„ μ»¤μ„ μ„μΉ λ μ§€μ¤ν„° μ„ νƒ
+    // CRTC μ»¨νΈλ΅? ?–΄?“? ?¤ ? μ§??¤?„°(?¬?Έ 0x3d4)?— 0x0Eλ¥? ? „?†΅?•?—¬
+    // ?ƒ?„ μ»¤μ„ ?„μΉ? ? μ§??¤?„° ?„ ?ƒ
     kOutPortByte(VGA_PORT_INDEX, VGA_INDEX_UPPERCURSOR);
-    // CRTC μ»¨νΈλ΅¤ λ°μ΄ν„° λ μ§€μ¤ν„°μ— μ»¤μ„μ μƒμ„ λ°”μ΄νΈλ¥Ό μ¶λ ¥
+    // CRTC μ»¨νΈλ΅? ?°?΄?„° ? μ§??¤?„°?— μ»¤μ„? ?ƒ?„ λ°”μ΄?Έλ¥? μ¶λ ¥
     kOutPortByte(VGA_PORT_DATA, iLinearValue >> 8);
-    // CRTC μ»¨νΈλ΅¤ μ–΄λ“λ μ¤ λ μ§€μ¤ν„°(ν¬νΈ 0x3d4)μ— 0x0Fλ¥Ό μ „μ†΅ν•μ—¬
-    // ν•μ„ μ»¤μ„ μ„μΉ λ μ§€μ¤ν„°λ¥Ό μ„ νƒ
+    // CRTC μ»¨νΈλ΅? ?–΄?“? ?¤ ? μ§??¤?„°(?¬?Έ 0x3d4)?— 0x0Fλ¥? ? „?†΅?•?—¬
+    // ?•?„ μ»¤μ„ ?„μΉ? ? μ§??¤?„°λ¥? ?„ ?ƒ
     kOutPortByte(VGA_PORT_INDEX, VGA_INDEX_LOWERCURSOR);
-    // CRTC μ»¨νΈλ΅¤ λ°μ΄ν„° λ μ§€μ¤ν„°μ— μ»¤μ„μ ν•μ„ λ°”μ΄νΈλ¥Ό μ¶λ ¥
+    // CRTC μ»¨νΈλ΅? ?°?΄?„° ? μ§??¤?„°?— μ»¤μ„? ?•?„ λ°”μ΄?Έλ¥? μ¶λ ¥
     kOutPortByte(VGA_PORT_DATA, iLinearValue & 0xff);
 
     gs_stConsoleManager.iCurrentPrintOffset = iLinearValue;
     
 }
 
-//ν„μ¬μ μ»¤μ„ μ„μΉ λ°ν™
+//?„?¬? μ»¤μ„ ?„μΉ? λ°ν™
 void kGetCursor(int *piX, int *piY)
 {
     *piX = gs_stConsoleManager.iCurrentPrintOffset % CONSOLE_WIDTH;
@@ -116,7 +116,8 @@ BYTE kGetCh(void)
 
     while(1)
     {
-        while(kGetKeyFromKeyQueue(&stData) == FALSE);
+        while(kGetKeyFromKeyQueue(&stData) == FALSE)
+            kSchedule();
 
         if(stData.bFlags & KEY_FLAGS_DOWN)
         {
