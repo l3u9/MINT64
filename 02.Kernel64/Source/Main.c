@@ -67,14 +67,14 @@ void Main( void )
     }
 
     kPrintf( "PIC Controller And Interrupt Initialize.....[    ]" );
-    // PIC ��Ʈ�ѷ� �ʱ�ȭ �� ���? ���ͷ�Ʈ Ȱ��ȭ
+    // PIC 컨트롤러 초기화 및 모든 인터럽 활성화
     kInitializePIC();
     kMaskPICInterrupt( 0 );
     kEnableInterrupt();
     kSetCursor( 45, iCursorY++ );
     kPrintf( "Pass\n" );
 
-    // ?��?�� ?��?��?���? ?��?��?���? ?�� ?��?��
-    kCreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_IDLE, (QWORD)kIdleTask);
+    // 유휴 태스크를 시스템 스레드로 생성하고 쉘을 시작
+    kCreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_THREAD | TASK_FLAGS_SYSTEM, 0, 0, (QWORD)kIdleTask);
     kStartConsoleShell();
 }
