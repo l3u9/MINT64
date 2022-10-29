@@ -1,6 +1,3 @@
-
-
-
 #include "ConsoleShell.h"
 #include "Console.h"
 #include "Keyboard.h"
@@ -9,9 +6,9 @@
 #include "RTC.h"
 #include "AssemblyUtility.h"
 #include "Task.h"
+#include "Synchronization.h"
 
-
-// 커맨?�� ?��?���?? ?��?��
+// ì»¤ë§¨?ï¿½ï¿½ ?ï¿½ï¿½?ï¿½ï¿½ï¿?? ?ï¿½ï¿½?ï¿½ï¿½
 SHELLCOMMANDENTRY gs_vstCommandTable[] =
 {
         { "help", "Show Help", kHelp },
@@ -27,12 +24,13 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] =
         { "createtask", "Create Task, ex)createtask 1(type) 10(count)", kCreateTestTask},
         { "changepriority", "Change Task Priority, ex)changepriority 1(ID) 2(Priority)", kChangeTaskPriority},
         { "tasklist", "Show Task List", kShowTaskList},
-        { "killtask", "End Task, ex)killtask 1(ID)", kKillTask},
+        { "killtask", "End Task, ex)killtask 1(ID) or 0xffffffff(ALL Task)", kKillTask},
         { "cpuload", "Show Processor Load", kCPULoad},
+        { "testmutex", "Test Mutex Function", kTestMutex},
 };
 
 //==============================================================================
-//  ?��?�� ?��?�� 구성?��?�� 코드
+//  ?ï¿½ï¿½?ï¿½ï¿½ ?ï¿½ï¿½?ï¿½ï¿½ êµ¬ì„±?ï¿½ï¿½?ï¿½ï¿½ ì½”ë“œ
 //==============================================================================
 
 void kStartConsoleShell( void )
@@ -85,7 +83,7 @@ void kStartConsoleShell( void )
                 bKey = ' ';
             }
 
-            // 버퍼?�� 공간?�� ?��?��?��?�� ?���?? �???��
+            // ë²„í¼?ï¿½ï¿½ ê³µê°„?ï¿½ï¿½ ?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½?ï¿½ï¿½ ?ï¿½ï¿½ï¿?? ï¿???ï¿½ï¿½
             if( iCommandBufferIndex < CONSOLESHELL_MAXCOMMANDBUFFERCOUNT )
             {
                 vcCommandBuffer[ iCommandBufferIndex++ ] = bKey;
@@ -165,7 +163,7 @@ int kGetNextParameter( PARAMETERLIST* pstList, char* pcParameter )
 }
 
 //==============================================================================
-//  커맨?���?? 처리?��?�� 코드
+//  ì»¤ë§¨?ï¿½ï¿½ï¿?? ì²˜ë¦¬?ï¿½ï¿½?ï¿½ï¿½ ì½”ë“œ
 //==============================================================================
 
 static void kHelp( const char* pcCommandBuffer )
@@ -222,7 +220,7 @@ static void kStringToDecimalHexTest( const char* pcParameterBuffer )
     int iCount = 0;
     long lValue;
 
-    // ?��?��미터 초기?��
+    // ?ï¿½ï¿½?ï¿½ï¿½ë¯¸í„° ì´ˆê¸°?ï¿½ï¿½
     kInitializeParameter( &stList, pcParameterBuffer );
 
     while( 1 )
@@ -548,6 +546,8 @@ static void kKillTask(const char* pcParameterBuffer)
     PARAMETERLIST stList;
     char vcID[30];
     QWORD qwID;
+    TCB* pstTCB;
+    int i;
 
     kInitializeParameter(&stList, pcParameterBuffer);
     kGetNextParameter(&stList, vcID);
@@ -556,6 +556,31 @@ static void kKillTask(const char* pcParameterBuffer)
         qwID = kAToI(vcID + 2, 16);
     else
         qwID = kAToI(vcID, 10);
+    
+    if(qwID != 0xffffffff)
+    {
+        kPrintf("Kill Task ID [0x%q]", qwID);
+        if(kEndTask(qwID) == TRUE)
+            kPrintf("Success\n");
+        else
+            kPrintf("Fail\n");
+    }
+    else
+    {
+        for(i = 2; i < TASK_MAXCOUNT; i++)
+        {
+            pstTCB = kGetTCBInTCBPool(i);
+            qwID = pstTCB->stLink.qwID;
+            if((qwID)>>32 != 0)
+            {
+                kPrintf("Kill Task ID[%q]", qwID);
+                if(kEndTask(qwID) == TRUE)
+                    kPrintf("Success\n");
+                else
+                    kPrintf("Fail\n");
+            }
+        }
+    }
     
     kPrintf("Kill Task ID [0x%q] ", qwID);
     if(kEndTask(qwID) == TRUE)
@@ -567,4 +592,48 @@ static void kKillTask(const char* pcParameterBuffer)
 static void kCPULoad(const char* pcParametetBuffer)
 {
     kPrintf("Processor Load : %d%%\n", kGetProcessorLoad());
+}
+
+static MUTEX* gs_stMutex;
+static volatile QWORD gs_qwAdder = 1;
+
+static void kPrintNumberTask(void)
+{
+    int i, j;
+    QWORD qwTickCount;
+    while((kGetTickCount() - qwTickCount) < 50)
+    {
+        kSchedule();
+    }
+
+    for(i = 0; i < 5; i++)
+    {
+        kPrintf("Task ID [0x%Q] Value[%d]\n", kGetRunningTask()->stLink.qwID,gs_qwAdder);
+
+        gs_qwAdder++;
+
+        for(j = 0; j < 30000; j++);
+    }
+
+    qwTickCount = kGetTickCount();
+    while((kGetTickCount() - qwTickCount) < 1000)
+    {
+        kSchedule();
+    }
+    kExitTask();
+
+}
+
+static void kTestMutex(const char* pcParameterBuffer)
+{
+    int i;
+    gs_qwAdder = 1;
+    
+    kInitializeMutex(&gs_stMutex);
+
+    for(i = 0; i < 3; i++)
+        kCreateTask(TASK_FLAGS_LOW, (QWORD)kPrintNumberTask);
+
+    kPrintf("Wait Util %d Task End...\n", i);
+    kGetCh();
 }

@@ -118,24 +118,24 @@ typedef struct kSchedulerStruct
 #pragma pack(pop)
 
 
-void kInitializeTCBPool(void);
-TCB* kAllocateTCB(void);
-void kFreeTCB(QWORD qwID);
+static void kInitializeTCBPool(void);
+static TCB* kAllocateTCB(void);
+static void kFreeTCB(QWORD qwID);
 TCB* kCreateTask(QWORD qwFlags, QWORD qwEntryPointAddress);
-void kSetUpTask( TCB* pstTCB, QWORD qwFlags, QWORD qwEntryPointAddress,
+static void kSetUpTask( TCB* pstTCB, QWORD qwFlags, QWORD qwEntryPointAddress,
         void* pvStackAddress, QWORD qwStackSize );
-//?Š¤ì¼?ì¤„ëŸ¬ ê´?? ¨ ?•¨?ˆ˜
+//?ï¿½ï¿½ï¿??ì¤„ëŸ¬ ï¿???ï¿½ï¿½ ?ï¿½ï¿½?ï¿½ï¿½
 void kInitializeScheduler(void);
-void kSetRunningTask(TCB* pstTask);
+static void kSetRunningTask(TCB* pstTask);
 TCB* kGetRunningTask(void);
-TCB* kGetNextTaskToRun(void);
+static TCB* kGetNextTaskToRun(void);
 // void kAddTaskToReadyList(TCB* pstTask);
-BOOL kAddTaskToReadyList(TCB* pstTask);
+static BOOL kAddTaskToReadyList(TCB* pstTask);
 void kSchedule(void);
 BOOL kScheduleInInterrupt(void);
 void kDecreaseProcessorTime(void);
 BOOL kIsProcessorTimeExpired(void);
-TCB* kRemoveTaskFromReadyList(QWORD qwTaskID);
+static TCB* kRemoveTaskFromReadyList(QWORD qwTaskID);
 BOOL kChangePriority(QWORD qwID, BYTE bPriority);
 BOOL kEndTask(QWORD qwTaskID);
 void kExitTask(void);
@@ -145,7 +145,7 @@ TCB* kGetTCBInTCBPool(int iOffset);
 BOOL kIsTaskExist(QWORD qwID);
 QWORD kGetProcessorLoad(void);
 
-//À¯ÈÞ ÅÂ½ºÅ© °ü·Ã
+//ï¿½ï¿½ï¿½ï¿½ ï¿½Â½ï¿½Å© ï¿½ï¿½ï¿½ï¿½
 void kIdleTask(void);
 void kHaltProcessorByLoad(void);
 

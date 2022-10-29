@@ -16,6 +16,6 @@ BOOL kSetInterruptFlag(BOOL bEnableInterrupt);
 QWORD kReadTSC(void);
 void kSwitchContext(CONTEXT* pstCurrentContext, CONTEXT *pstNextContext);
 void kHlt(void);
-
+BOOL kTestAndSet(volatile BYTE* pdDestination, BYTE bCompare, BYTE bSource);
 
 #endif
