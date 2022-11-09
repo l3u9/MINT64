@@ -88,6 +88,7 @@ void Main( void )
         kSetCursor(45, iCursorY++);
         kPrintf("Fail\n");
     }
+    
 
     // 유휴 태스크를 시스템 스레드로 생성하고 쉘을 시작
     kCreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_THREAD | TASK_FLAGS_SYSTEM, 0, 0, (QWORD)kIdleTask);
