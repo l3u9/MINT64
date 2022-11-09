@@ -7,10 +7,8 @@
 #include "ConsoleShell.h"
 #include "Task.h"
 #include "PIT.h"
+#include "DynamicMemory.h"
 
-/**
- *  �Ʒ� �Լ��� C ���? Ŀ���� ���� �κ���
- */
 void Main( void )
 {
     int iCursorX, iCursorY;
@@ -49,10 +47,14 @@ void Main( void )
     iCursorY++;
     kInitializeScheduler();
 
-    kInitializePIT( MSTOCOUNT( 5 ), 1 );
+    kPrintf("Dynamic Memory Initialize...................[Pass]\n");
+    iCursorY++;
+    kInitializeDynamicMemory();
+
+    kInitializePIT( MSTOCOUNT( 1 ), 1 );
 
     kPrintf( "Keyboard Activate And Queue Initialize......[    ]" );
-    // Ű���带 Ȱ��ȭ
+
     if( kInitializeKeyboard() == TRUE )
     {
         kSetCursor( 45, iCursorY++ );
