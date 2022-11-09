@@ -50,7 +50,7 @@ kReadCPUID:
 kSwitchAndExecute64bitKernel:
     ;PAE bit in CR4 set 1
     mov eax, cr4
-    or eax, 0x20 ;PAE bit(bit5) set 1
+    or eax, 0x620 ;PAE bit(bit5) set 1
     mov cr4, eax
 
     ;CR3컨트롤 레스터에 PML4 테이블의 어드레스와 캐시 활성화
@@ -66,10 +66,12 @@ kSwitchAndExecute64bitKernel:
 
     ;CR0 컨트롤 레지스터를 NW bit(bit29) = 0, CD bit(bit30) = 0, PG bit(bit31) = 1로 설정하여 캐시 기능과 페이징 기능을 활성화
     mov eax, cr0
-    or eax, 0xe0000000
-    xor eax, 0x60000000
+    or eax, 0xe000000e
+    xor eax, 0x60000004
     mov cr0, eax
 
     jmp 0x08:0x200000 ;CS 세그머느 셀렉터를 IA-32e 모드용 코드 세그먼트 디스크립터로 교체하고 0x200000어드레스로 이동
+
+    jmp $
 
     

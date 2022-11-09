@@ -7,6 +7,7 @@ void kCommonExceptionHandler(int iVectorNumber, QWORD qwErrorCode);
 void kCommonInterruptHandlr(int iVectorNumber);
 void kKeyboardHandler(int iVectorNumber);
 void kTimerHandler(int iVectorNumber);
+void kDeviceNotAvailableHandler(int iVectyorNumber);
 
 #endif
 
