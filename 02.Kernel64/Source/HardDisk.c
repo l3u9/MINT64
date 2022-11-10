@@ -310,7 +310,7 @@ int kWriteHDDSector(BOOL bPrimary, BOOL bMaster, DWORD dwLBA, int iSectorCount, 
     {
         kSetHDDInterruptFlag(bPrimary, FALSE);
         for(j = 0; j < 512/2; j++)
-            kOutPortByte(wPortBase + HDD_PORT_INDEX_DATA, ((WORD*)pcBuffer)[lReadCount++]);
+            kOutPortWord(wPortBase + HDD_PORT_INDEX_DATA, ((WORD*)pcBuffer)[lReadCount++]);
         
         bStatus = kReadHDDStatus(bPrimary);
         if((bStatus & HDD_STATUS_ERROR) == HDD_STATUS_ERROR)
