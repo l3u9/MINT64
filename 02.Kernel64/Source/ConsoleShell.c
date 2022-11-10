@@ -47,9 +47,6 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] =
 
 };
 
-//==============================================================================
-//  ?ï¿½ï¿½?ï¿½ï¿½ ?ï¿½ï¿½?ï¿½ï¿½ êµ¬ì„±?ï¿½ï¿½?ï¿½ï¿½ ì½”ë“œ
-//==============================================================================
 
 void kStartConsoleShell( void )
 {
@@ -1132,15 +1129,15 @@ static void kShowFileSystemInformation(const char* pcParameterBuffer)
 {
     FILESYSTEMMANAGER stManager;
 
-    kGetFileSystemInformation(&stManager);
-
+    kGetFileSystemInformation( &stManager );
+    
     kPrintf( "================== File System Information ==================\n" );
-    kPrintf( "Mounted:\t\t\t\t\t %d\n", stManager.bMounted);
-    kPrintf( "Reserved Sector Count:\t\t\t %d Sector\n", stManager.dwReservedSectorCount);
-    kPrintf( "Cluster Link Table STart Address:\t %d Sector\n", stManager.dwClusterLinkAreaStartAddress);
-    kPrintf( "Cluster Link Table Size:\t\t %d Sector\n", stManager.dwClusterLinkAreaSize);
-    kPrintf( "Data Area Start Address:\t\t %d Sector\n", stManager.dwDataAreaStartAddress);
-    kPrintf("Total Cluster Count:\t\t\t %d Cluster\n", stManager.dwTotalClusterCount);
+    kPrintf( "Mouted:\t\t\t\t\t %d\n", stManager.bMounted );
+    kPrintf( "Reserved Sector Count:\t\t\t %d Sector\n", stManager.dwReservedSectorCount  );
+    kPrintf( "Cluster Link Table Start Address:\t %d Sector\n", stManager.dwClusterLinkAreaStartAddress );
+    kPrintf( "Cluster Link Table Size:\t\t %d Sector\n", stManager.dwClusterLinkAreaSize );
+    kPrintf( "Data Area Start Address:\t\t %d Sector\n", stManager.dwDataAreaStartAddress );
+    kPrintf( "Total Cluster Count:\t\t\t %d Cluster\n", stManager.dwTotalClusterCount );
 }
 
 static void kCreateFileInRootDirectory(const char* pcParameterBuffer)
@@ -1160,7 +1157,6 @@ static void kCreateFileInRootDirectory(const char* pcParameterBuffer)
         kPrintf("Too Long or Too Short File Name\n");
         return;
     }
-
     dwCluster = kFindFreeCluster();
 
     if((dwCluster == FILESYSTEM_LASTCLUSTER) || (kSetClusterLinkData(dwCluster, FILESYSTEM_LASTCLUSTER) == FALSE))
@@ -1179,6 +1175,7 @@ static void kCreateFileInRootDirectory(const char* pcParameterBuffer)
     }
 
     kMemCpy(stEntry.vcFileName, vcFileName, iLength + 1);
+    stEntry.dwStartClusterIndex = dwCluster;
     stEntry.dwFileSize = 0;
 
     if(kSetDirectoryEntryData(i, &stEntry) == FALSE)
@@ -1265,12 +1262,11 @@ static void kShowRootDirectory(const char* pcParameterBuffer)
     {
         if(pstEntry[i].dwStartClusterIndex == 0)
             continue;
+
         kMemSet(vcBuffer, ' ', sizeof(vcBuffer) - 1);
         vcBuffer[sizeof(vcBuffer) - 1] = '\0';
 
         kMemCpy(vcBuffer, pstEntry[i].vcFileName, kStrLen(pstEntry[i].vcFileName));
-
-        kSPrintf(vcBuffer, pstEntry[i].vcFileName, kStrLen(pstEntry[i].vcFileName));
 
         kSPrintf(vcTempValue, "%d Byte", pstEntry[i].dwFileSize);
         kMemCpy(vcBuffer + 30, vcTempValue, kStrLen(vcTempValue));
