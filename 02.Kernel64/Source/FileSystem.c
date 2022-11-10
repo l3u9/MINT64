@@ -62,78 +62,81 @@ BOOL kMount(void)
 
 }
 
-BOOL kFormat(void)
+BOOL kFormat( void )
 {
     HDDINFORMATION* pstHDD;
     MBR* pstMBR;
     DWORD dwTotalSectorCount, dwRemainSectorCount;
-    DWORD dwMaxClusterCount, dwClusterCount;
+    DWORD dwMaxClusterCount, dwClsuterCount;
     DWORD dwClusterLinkSectorCount;
     DWORD i;
-
+    
     kLock(&(gs_stFileSystemManager.stMutex));
 
+
     pstHDD = (HDDINFORMATION*) gs_vbTempBuffer;
-    if(gs_pfReadHDDInformation(TRUE, TRUE, pstHDD) == FALSE);
+    if(gs_pfReadHDDInformation(TRUE, TRUE, pstHDD) == FALSE)
     {
+        // 동기화 처리
         kUnlock(&(gs_stFileSystemManager.stMutex));
         return FALSE;
-    }
-
+    }    
     dwTotalSectorCount = pstHDD->dwTotalSectors;
-
+    
+    // 전체 섹터 수를 4Kbyte, 즉 클러스터 크기로 나누어 최대 클러스터 수를 계산
     dwMaxClusterCount = dwTotalSectorCount / FILESYSTEM_SECTORSPERCLUSTER;
-
-    //최대 클러스터의 수에 맞춰 클러스터 링크 테이블의 섹터수를 계산
-    //링크 데이터는 4바이트 이므로 한 섹터에는 128개가 들어간다. 따라서 총 개수를 128로 나눈 후 올림하여 클라스터 링크의 섹터 수를 구한다.
+    
+    // 최대 클러스터의 수에 맞추어 클러스터 링크 테이블의 섹터 수를 계산
+    // 링크 데이터는 4바이트이므로, 한 섹터에는 128개가 들어감. 따라서 총 개수를
+    // 128로 나눈 후 올림하여 클러스터 링크의 섹터 수를 구함
     dwClusterLinkSectorCount = (dwMaxClusterCount + 127) / 128;
-
-    //reserved area는 사용하지 않으므로 디스크 전체 영역에서 MBR 영역과 클러스터 링크 테이블 영역의 크기를 뺀 나머지가 실제 데티어 영역이 된다.
-    //해당 영역을 클러스터 크기로 나누어 실제 클러스터의 수를 구함
+    
+    // 예약된 영역은 현재 사용하지 않으므로, 디스크 전체 영역에서 MBR 영역과 클러스터
+    // 링크 테이블 영역의 크기를 뺀 나머지가 실제 데이터 영역이 됨
+    // 해당 영역을 클러스터 크기로 나누어 실제 클러스터의 개수를 구함
     dwRemainSectorCount = dwTotalSectorCount - dwClusterLinkSectorCount - 1;
-    dwClusterCount = dwRemainSectorCount / FILESYSTEM_SECTORSPERCLUSTER;
+    dwClsuterCount = dwRemainSectorCount / FILESYSTEM_SECTORSPERCLUSTER;
+    
+    // 실제 사용 가능한 클러스터 수에 맞추어 다시 한번 계산
+    dwClusterLinkSectorCount = (dwClsuterCount + 127) / 128;
 
-    //실제 사용 가능한 클러스터 수에 맞춰 다시 한 번 계산
-    dwClusterLinkSectorCount = (dwClusterCount + 127) / 128;
-
-    if(gs_pfReadHDDSector(TRUE, TRUE, 0, 1, gs_vbTempBuffer) == FALSE)
+    if(gs_pfReadHDDSector(TRUE,TRUE, 0, 1, gs_vbTempBuffer) == FALSE )
     {
-        kUnlock(&(gs_stFileSystemManager.stMutex));
+        kUnlock( &(gs_stFileSystemManager.stMutex));
         return FALSE;
-    }
-
-    pstMBR = (MBR*)gs_vbTempBuffer;
-    kMemSet(pstMBR->vstPartition, 0, sizeof(pstMBR->vstPartition));
+    }        
+    
+    pstMBR = (MBR*) gs_vbTempBuffer;
+    kMemSet( pstMBR->vstPartition, 0, sizeof(pstMBR->vstPartition));
     pstMBR->dwSignature = FILESYSTEM_SIGNATURE;
     pstMBR->dwReservedSectorCount = 0;
     pstMBR->dwClusterLinkSectorCount = dwClusterLinkSectorCount;
-    pstMBR->dwTotalClusterCount = dwClusterCount;
-
-    if(gs_pfWriteHDDSector(TRUE, TRUE, 0, 1, gs_vbTempBuffer) == FALSE)
+    pstMBR->dwTotalClusterCount = dwClsuterCount;
+    
+    if( gs_pfWriteHDDSector(TRUE, TRUE, 0, 1, gs_vbTempBuffer) == FALSE )
     {
-        kUnlock(&(gs_stFileSystemManager.stMutex));
+        kUnlock(&(gs_stFileSystemManager.stMutex) );
         return FALSE;
     }
-
-    kMemSet(gs_vbTempBuffer, 0, 512);
     
-    for(i = 0; i < (dwClusterLinkSectorCount + FILESYSTEM_SECTORSPERCLUSTER); i++)
+    kMemSet(gs_vbTempBuffer, 0, 512);
+    for(i = 0 ; i < (dwClusterLinkSectorCount + FILESYSTEM_SECTORSPERCLUSTER); i++)
     {
-        if(i == 0)
-            ((DWORD*) (gs_vbTempBuffer))[0] = FILESYSTEM_LASTCLUSTER;
+
+        if( i == 0 )
+            ((DWORD*) (gs_vbTempBuffer) )[0] = FILESYSTEM_LASTCLUSTER;
         else
             ((DWORD*) (gs_vbTempBuffer))[0] = FILESYSTEM_FREECLUSTER;
         
-        if(gs_pfWriteHDDSector(TRUE, TRUE, i+1, 1, gs_vbTempBuffer) == FALSE)
+        if(gs_pfWriteHDDSector(TRUE, TRUE, i + 1, 1, gs_vbTempBuffer) == FALSE)
         {
             kUnlock(&(gs_stFileSystemManager.stMutex));
             return FALSE;
         }
-    }
+    }    
     
     kUnlock(&(gs_stFileSystemManager.stMutex));
     return TRUE;
-
 }
 
 BOOL kGetHDDInformation(HDDINFORMATION* pstInformation)
@@ -161,7 +164,10 @@ BOOL kWriteClusterLinkTable(DWORD dwOffset, BYTE* pbBuffer)
 
 BOOL kReadCluster(DWORD dwOffset, BYTE* pbBuffer)
 {
-    return gs_pfReadHDDInformation(TRUE, TRUE, (dwOFfset * FILESYSTEM_SECTORSPERCLUSTER) + gs_stFileSystemManager.dwDataAreaStartAddress, FILESYSTEM_SECTORSPERCLUSTER, pbBuffer);
+return gs_pfReadHDDSector( TRUE, TRUE, ( dwOffset * FILESYSTEM_SECTORSPERCLUSTER ) + 
+                        gs_stFileSystemManager.dwDataAreaStartAddress,
+                        FILESYSTEM_SECTORSPERCLUSTER, pbBuffer );
+            
 }
 
 BOOL kWriteCluster(DWORD dwOffset, BYTE* pbBuffer)
@@ -239,7 +245,7 @@ BOOL kGetClusterLinkData(DWORD dwClusterIndex, DWORD* pdwData)
     if(dwSectorOFfset > gs_stFileSystemManager.dwClusterLinkAreaSize)
         return FALSE;
     
-    if(kReadClusterLinkTable(dwSectorOFfset, gs_vbTempBuffer) == FALSe)
+    if(kReadClusterLinkTable(dwSectorOFfset, gs_vbTempBuffer) == FALSE)
         return FALSE;
     
     *pdwData = ((DWORD*) gs_vbTempBuffer)[dwClusterIndex % 128];

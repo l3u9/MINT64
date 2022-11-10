@@ -90,7 +90,7 @@ void Main( void )
         kPrintf("Fail\n");
     }
 
-    kPrintf( "File System Initialize......................[ ]" );
+    kPrintf( "File System Initialize......................[    ]" );
     if( kInitializeFileSystem() == TRUE )
     {
         kSetCursor( 45, iCursorY++ );
