@@ -49,11 +49,10 @@ typedef struct kDirectoryEntryStruct
     DWORD dwStartClusterIndex;
 }DIRECTORYENTRY;
 
-#pragma pack(pop)
 
 typedef struct kFileSystemManagerStruct
 {
-    char reserved[3];
+    // char reserved[3];
 
     BOOL bMounted;
 
@@ -67,6 +66,10 @@ typedef struct kFileSystemManagerStruct
 
     MUTEX stMutex;
 }FILESYSTEMMANAGER;
+
+//책에 있는 위치랑 비교
+#pragma pack(pop)
+
 
 BOOL kInitializeFileSystem(void);
 BOOL kFormat(void);
