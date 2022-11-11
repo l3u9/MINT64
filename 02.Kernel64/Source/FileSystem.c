@@ -2,6 +2,8 @@
 #include "HardDisk.h"
 #include "DynamicMemory.h"
 #include "Console.h"
+#include "Utility.h"
+#include "Task.h"
 
 static FILESYSTEMMANAGER gs_stFileSystemManager;
 static BYTE gs_vbTempBuffer[FILESYSTEM_SECTORSPERCLUSTER * 512];
@@ -26,6 +28,17 @@ BOOL kInitializeFileSystem(void)
     
     if(kMount() == FALSE)
         return FALSE;
+
+    gs_stFileSystemManager.pstHandlePool = (FILE*) kAllocateMemory(FILESYSTEM_HANDLE_MAXCOUNT * sizeof(FILE));
+
+    if(gs_stFileSystemManager.pstHandlePool == NULL)
+    {
+        gs_stFileSystemManager.bMounted = FALSE;
+        return FALSE;
+    }
+
+    kMemSet(gs_stFileSystemManager.pstHandlePool, 0, FILESYSTEM_HANDLE_MAXCOUNT * sizeof(FILE));
+
 
     return TRUE;
 }
@@ -149,30 +162,29 @@ BOOL kGetHDDInformation(HDDINFORMATION* pstInformation)
     return bResult;
 }
 
-BOOL kReadClusterLinkTable(DWORD dwOffset, BYTE* pbBuffer)
+static BOOL kReadClusterLinkTable(DWORD dwOffset, BYTE* pbBuffer)
 {
     return gs_pfReadHDDSector(TRUE, TRUE, dwOffset + gs_stFileSystemManager.dwClusterLinkAreaStartAddress, 1, pbBuffer);
 }
 
-BOOL kWriteClusterLinkTable(DWORD dwOffset, BYTE* pbBuffer)
+static BOOL kWriteClusterLinkTable(DWORD dwOffset, BYTE* pbBuffer)
 {
     return gs_pfWriteHDDSector(TRUE, TRUE, dwOffset + gs_stFileSystemManager.dwClusterLinkAreaStartAddress, 1, pbBuffer);
 }
 
-BOOL kReadCluster(DWORD dwOffset, BYTE* pbBuffer)
+static BOOL kReadCluster(DWORD dwOffset, BYTE* pbBuffer)
 {
     return gs_pfReadHDDSector( TRUE, TRUE, ( dwOffset * FILESYSTEM_SECTORSPERCLUSTER ) + 
                             gs_stFileSystemManager.dwDataAreaStartAddress,
-                            FILESYSTEM_SECTORSPERCLUSTER, pbBuffer );
-            
+                            FILESYSTEM_SECTORSPERCLUSTER, pbBuffer );     
 }
 
-BOOL kWriteCluster(DWORD dwOffset, BYTE* pbBuffer)
+static BOOL kWriteCluster(DWORD dwOffset, BYTE* pbBuffer)
 {
     return gs_pfWriteHDDSector(TRUE, TRUE, (dwOffset * FILESYSTEM_SECTORSPERCLUSTER) + gs_stFileSystemManager.dwDataAreaStartAddress, FILESYSTEM_SECTORSPERCLUSTER, pbBuffer);
 }
 
-DWORD kFindFreeCluster(void)
+static DWORD kFindFreeCluster(void)
 {
     DWORD dwLinkCountInSector;
     DWORD dwLastSectorOffset, dwCurrentSectorOffset;
@@ -210,7 +222,7 @@ DWORD kFindFreeCluster(void)
 }
 
 
-BOOL kSetClusterLinkData(DWORD dwClusterIndex, DWORD dwData)
+static BOOL kSetClusterLinkData(DWORD dwClusterIndex, DWORD dwData)
 {
     DWORD dwSectorOffset;
 
@@ -230,7 +242,7 @@ BOOL kSetClusterLinkData(DWORD dwClusterIndex, DWORD dwData)
     return TRUE;
 }
 
-BOOL kGetClusterLinkData(DWORD dwClusterIndex, DWORD* pdwData)
+static BOOL kGetClusterLinkData(DWORD dwClusterIndex, DWORD* pdwData)
 {
     DWORD dwSectorOFfset;
 
@@ -249,7 +261,7 @@ BOOL kGetClusterLinkData(DWORD dwClusterIndex, DWORD* pdwData)
     return TRUE;
 }
 
-int kFindFreeDirectoryEntry(void)
+static int kFindFreeDirectoryEntry(void)
 {
     DIRECTORYENTRY* pstEntry;
     int i;
@@ -270,7 +282,7 @@ int kFindFreeDirectoryEntry(void)
 }
 
 
-BOOL kSetDirectoryEntryData(int iIndex, DIRECTORYENTRY* pstEntry)
+static BOOL kSetDirectoryEntryData(int iIndex, DIRECTORYENTRY* pstEntry)
 {
     DIRECTORYENTRY* pstRootEntry;
 
@@ -289,7 +301,7 @@ BOOL kSetDirectoryEntryData(int iIndex, DIRECTORYENTRY* pstEntry)
     return TRUE;
 }
 
-BOOL kGetDirectoryEntryData(int iIndex, DIRECTORYENTRY* pstEntry)
+static BOOL kGetDirectoryEntryData(int iIndex, DIRECTORYENTRY* pstEntry)
 {
     DIRECTORYENTRY* pstRootEntry;
 
@@ -305,7 +317,7 @@ BOOL kGetDirectoryEntryData(int iIndex, DIRECTORYENTRY* pstEntry)
 }
 
 
-int kFindDirectoryEntry(const char* pcFileName, DIRECTORYENTRY* pstEntry)
+static int kFindDirectoryEntry(const char* pcFileName, DIRECTORYENTRY* pstEntry)
 {
     DIRECTORYENTRY* pstRootEntry;
     int i;
@@ -337,3 +349,287 @@ void kGetFileSystemInformation(FILESYSTEMMANAGER* pstManager)
     kMemCpy(pstManager, &gs_stFileSystemManager, sizeof(gs_stFileSystemManager));
 
 }
+
+static void* kAllocateFileDirectoryHandle(void)
+{
+    int i;
+    FILE* pstFile;
+
+    pstFile = gs_stFileSystemManager.pstHandlePool;
+    for(i = 0; i < FILESYSTEM_HANDLE_MAXCOUNT; i++)
+    {
+        if(pstFile->bType == FILESYSTEM_TYPE_FREE)
+        {
+            pstFile->bType = FILESYSTEM_TYPE_FREE;
+            return pstFile;
+        }
+
+        pstFile++;
+    }
+    return NULL;
+}
+
+static void kFreeFileDirectoryHandle(FILE* pstFile)
+{
+    kMemSet(pstFile, 0, sizeof(FILE));
+
+    pstFile->bType = FILESYSTEM_TYPE_FREE;
+}
+
+static BOOL kCreateFile(const char* pcFileName, DIRECTORYENTRY* pstEntry, int* piDirectoryEntryIndex)
+{
+    DWORD dwCluster;
+
+    dwCluster = kFindFreeCluster();
+    if((dwCluster == FILESYSTEM_LASTCLUSTER) || (kSetClusterLinkData(dwCluster, FILESYSTEM_LASTCLUSTER) == FALSE))
+        return FALSE;
+    
+    *piDirectoryEntryIndex = kFindFreeDirectoryEntry();
+    if(*piDirectoryEntryIndex == -1)
+    {
+        kSetClusterLinkData(dwCluster, FILESYSTEM_FREECLUSTER);
+        return FALSE;
+    }
+
+    kMemCpy(pstEntry->vcFileName, pcFileName, kStrLen(pcFileName) + 1);
+    pstEntry->dwStartClusterIndex = dwCluster;
+    pstEntry->dwFileSize = 0;
+
+    if(kSetDirectoryEntryData(*piDirectoryEntryIndex, pstEntry) == FALSE)
+    {
+        kSetClusterLinkData(dwCluster, FILESYSTEM_FREECLUSTER);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static BOOL kFreeClusterUntilEnd(DWORD dwClusterIndex)
+{
+    DWORD dwCurrentClusterIndex;
+    DWORD dwNextClusterIndex;
+
+    dwCurrentClusterIndex = dwClusterIndex;
+
+    while(dwCurrentClusterIndex != FILESYSTEM_LASTCLUSTER)
+    {
+        if(kGetClusterLinkData(dwCurrentClusterIndex, &dwNextClusterIndex) == FALSE)
+            return FALSE;
+        
+        if(kSetClusterLinkData(dwCurrentClusterIndex, FILESYSTEM_FREECLUSTER) == FALSE)
+            return FALSE;
+        
+        dwCurrentClusterIndex = dwNextClusterIndex;
+    }
+
+    return TRUE;
+}
+
+FILE* kOpenFile(const char* pcFileName, const char* pcMode)
+{
+    DIRECTORYENTRY stEntry;
+    int iDirectoryEntryOffset;
+    int iFileNameLength;
+    DWORD dwSectorCluster;
+    FILE* pstFile;
+
+    iFileNameLength = kStrLen(pcFileName);
+    if((iFileNameLength > (sizeof(stEntry.vcFileName) - 1)) || (iFileNameLength == 0))
+        return NULL;
+    
+    kLock(&(gs_stFileSystemManager.stMutex));
+
+    iDirectoryEntryOffset = kFindDirectoryEntry(pcFileName, &stEntry);
+    if(iDirectoryEntryOffset == -1)
+    {
+        if(pcMode[0] == 'r')
+        {
+            kUnlock(&(gs_stFileSystemManager.stMutex));
+            return NULL;
+        }
+
+        if(kCreateFile(pcFileName, &stEntry, &iDirectoryEntryOffset) == FALSE)
+        {
+            kUnlock(&(gs_stFileSystemManager.stMutex));
+            return NULL;
+        }
+    }
+    else if(pcMode[0] == 'w')
+    {
+        if(kGetClusterLinkData(stEntry.dwStartClusterIndex, &dwSectorCluster) == FALSE)
+        {
+            kUnlock(&(gs_stFileSystemManager.stMutex));
+            return NULL;
+        }
+
+        if(kSetClusterLinkData(stEntry.dwStartClusterIndex, FILESYSTEM_LASTCLUSTER) == FALSE)
+        {
+            kUnlock(&(gs_stFileSystemManager.stMutex));
+            return NULL;
+        }
+        if(kFreeClusterUntilEnd(dwSectorCluster) == FALSE)
+        {
+            kUnlock(&(gs_stFileSystemManager.stMutex));
+            return NULL;
+        }
+
+        stEntry.dwFileSize = 0;
+        if(kSetDirectoryEntryData(iDirectoryEntryOffset, &stEntry) == FALSE)
+        {
+            kUnlock(&(gs_stFileSystemManager.stMutex));
+            return NULL;
+        }
+    }
+
+    pstFile = kAllocateFileDirectoryHandle();
+    if(pstFile == NULL)
+    {
+        kUnlock(&(gs_stFileSystemManager.stMutex));
+        return NULL;
+    }
+
+    pstFile->bType = FILESYSTEM_TYPE_FILE;
+    pstFile->stFileHandle.iDirectoryEntryOffset = iDirectoryEntryOffset;
+    pstFile->stFileHandle.dwFileSize = stEntry.dwFileSize;
+    pstFile->stFileHandle.dwStartClusterIndex = stEntry.dwStartClusterIndex;
+    pstFile->stFileHandle.dwPreviousClusterIndex = stEntry.dwStartClusterIndex;
+    pstFile->stFileHandle.dwCurrentOffset = 0;
+
+    if(pcMode[0] == 'a')
+        kSeekFile(pstFile, 0, FILESYSTEM_SEEK_END);
+
+    kUnlock(&(gs_stFileSystemManager.stMutex));
+    return pstFile;
+}
+
+DWORD kReadFile(void* pvBuffer, DWORD dwSize, DWORD dwCount, FILE* pstFile)
+{
+    DWORD dwTotalCount;
+    DWORD dwReadCount;
+    DWORD dwOffsetInCluster;
+    DWORD dwCopySize;
+    FILEHANDLE* pstFileHandle;
+    DWORD dwNextClusterIndex;
+
+    if((pstFile == NULL) || (pstFile->bType != FILESYSTEM_TYPE_FILE))
+        return 0;
+    
+    pstFileHandle = &(pstFile->stFileHandle);
+
+    if((pstFileHandle->dwCurrentOffset == pstFileHandle->dwFileSize) || (pstFileHandle->dwCurrentClusterIndex == FILESYSTEM_LASTCLUSTER))
+        return 0;
+    
+    dwTotalCount = MIN(dwSize * dwCount, pstFileHandle->dwFileSize - pstFileHandle->dwCurrentOffset);
+    kLock(&(gs_stFileSystemManager.stMutex));
+
+    dwReadCount = 0;
+    while(dwReadCount != dwTotalCount)
+    {
+        if(kReadCluster(pstFileHandle->dwCurrentClusterIndex, gs_vbTempBuffer) == FALSE)
+            break;
+        dwOffsetInCluster = pstFileHandle->dwCurrentOffset % FILESYSTEM_CLUSTERSIZE;
+
+        dwCopySize = MIN(FILESYSTEM_CLUSTERSIZE - dwOffsetInCluster, dwTotalCount - dwReadCount);
+
+        kMemCpy((char*)pvBuffer + dwReadCount, gs_vbTempBuffer + dwOffsetInCluster, dwCopySize);
+
+        dwReadCount += dwCopySize;
+        pstFileHandle->dwCurrentOffset += dwCopySize;
+
+        if((pstFileHandle->dwCurrentOffset % FILESYSTEM_CLUSTERSIZE) == 0){
+            if(kGetClusterLinkData(pstFileHandle->dwCurrentClusterIndex, &dwNextClusterIndex) == FALSE)
+                break;
+            pstFileHandle->dwPreviousClusterIndex = pstFileHandle->dwCurrentClusterIndex;
+            pstFileHandle->dwCurrentClusterIndex = dwNextClusterIndex;
+        }
+    }
+    kUnlock(&(gs_stFileSystemManager.stMutex));
+    return dwReadCount;
+}
+
+static BOOL kUpdateDirectoryEntry(FILEHANDLE* pstFileHandle)
+{
+    DIRECTORYENTRY stEntry;
+
+    if((pstFileHandle == NULL) || (kGetDirectoryEntryData(pstFileHandle->iDirectoryEntryOffset, &stEntry) == FALSE))
+        return FALSE;
+    
+    stEntry.dwFileSize = pstFileHandle->dwFileSize;
+    stEntry.dwStartClusterIndex = pstFileHandle->dwStartClusterIndex;
+
+    if(kSetDirectoryEntryData(pstFileHandle->iDirectoryEntryOffset, &stEntry) == FALSE)
+        return FALSE;
+    return TRUE;
+}
+
+DWORD kWriteFile(const void* pvBuffer, DWORD dwSize, DWORD dwCount, FILE* pstFile)
+{
+    DWORD dwWriteCount;
+    DWORD dwTotalCount;
+    DWORD dwOffsetInCluster;
+    DWORD dwCopySize;
+    DWORD dwAllocatedClusterIndex;
+    DWORD dwNextClusterIndex;
+    FILEHANDLE* pstFileHandle;
+
+    if((pstFile == NULL) || (pstFile->bType != FILESYSTEM_TYPE_FILE))
+        return 0;
+    
+    pstFileHandle = &(pstFile->stFileHandle);
+
+    dwTotalCount = dwSize * dwCount;
+
+    kLock(&(gs_stFileSystemManager.stMutex));
+
+    dwWriteCount = 0;
+    while(dwWriteCount != dwTotalCount)
+    {
+        if(pstFileHandle->dwCurrentClusterIndex == FILESYSTEM_LASTCLUSTER)
+        {
+            dwAllocatedClusterIndex = kFindFreeCluster();
+            if(dwAllocatedClusterIndex == FILESYSTEM_LASTCLUSTER)
+                break;
+            if(kSetClusterLinkData(dwAllocatedClusterIndex, FILESYSTEM_LASTCLUSTER) == FALSE)
+                break;
+            
+            if(kSetClusterLinkData(pstFileHandle->dwPreviousClusterIndex, dwAllocatedClusterIndex) == FALSE)
+            {
+                kSetClusterLinkData(dwAllocatedClusterIndex, FILESYSTEM_FREECLUSTER);
+                break;
+            }
+            pstFileHandle->dwCurrentClusterIndex = dwAllocatedClusterIndex;
+
+            kMemSet(gs_vbTempBuffer, 0, FILESYSTEM_LASTCLUSTER);
+        }
+        else if(((pstFileHandle->dwCurrentOffset % FILESYSTEM_CLUSTERSIZE) != 0) || ((dwTotalCount - dwWriteCount) < FILESYSTEM_CLUSTERSIZE))
+        {
+            if(kReadCluster(pstFileHandle->dwCurrentClusterIndex, gs_vbTempBuffer) == FALSE)
+                break;
+        }
+
+        dwOffsetInCluster = pstFileHandle->dwCurrentClusterIndex % FILESYSTEM_CLUSTERSIZE;
+        dwCopySize = MIN(FILESYSTEM_CLUSTERSIZE - dwOffsetInCluster, dwTotalCount - dwWriteCount);
+        kMemCpy(gs_vbTempBuffer + dwOffsetInCluster, (char*)pvBuffer + dwWriteCount, dwCopySize);
+
+        if(kWriteCluster(pstFileHandle->dwCurrentClusterIndex, gs_vbTempBuffer) == FALSE)
+            break;
+        dwWriteCount += dwCopySize;
+        pstFileHandle->dwCurrentOffset += dwCopySize;
+
+        if((pstFileHandle->dwCurrentOffset % FILESYSTEM_CLUSTERSIZE) == 0)
+        {
+            if(kGetClusterLinkData(pstFileHandle->dwCurrentClusterIndex, &dwNextClusterIndex) == FALSE)
+                break;
+            
+            pstFileHandle->dwPreviousClusterIndex = pstFileHandle->dwCurrentClusterIndex;
+            pstFileHandle->dwCurrentClusterIndex = dwNextClusterIndex;
+        }
+    }
+    if(pstFileHandle->dwFileSize < pstFileHandle->dwCurrentOffset)
+    {
+        pstFileHandle->dwFileSize = pstFileHandle->dwCurrentOffset;
+        kUpdateDirectoryEntry(pstFileHandle);
+    }
+    kUnlock(&gs_stFileSystemManager.stMutex);
+    return dwWriteCount;
+}
+
