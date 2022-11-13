@@ -111,27 +111,11 @@ typedef struct kFileDirectoryHandleStruct
     };
 }FILE, DIR;
 
-typedef struct kFileSystemManagerStruct
-{
-    BOOL bMounted;
-
-    DWORD dwReservedSectorCount;
-    DWORD dwClusterLinkAreaStartAddress;
-    DWORD dwClusterLinkAreaSize;
-    DWORD dwDataAreaStartAddress;
-    
-    DWORD dwTotalCLusterCount;
-
-    DWORD dwLastAllocatedClusterLinkSectorOffset;
-
-    MUTEX stMutex;
-
-    FILE* pstHandlePool
-}FILESYSTEMMANAGER;
+#pragma pack(pop)
 
 typedef struct kFileSystemManagerStruct
 {
-    // char reserved[3];
+    char reserved[3];
 
     BOOL bMounted;
 
@@ -148,7 +132,6 @@ typedef struct kFileSystemManagerStruct
 }FILESYSTEMMANAGER;
 
 //책에 있는 위치랑 비교
-#pragma pack(pop)
 
 
 BOOL kInitializeFileSystem(void);
