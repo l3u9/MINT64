@@ -429,7 +429,7 @@ FILE* kOpenFile(const char* pcFileName, const char* pcMode)
     DIRECTORYENTRY stEntry;
     int iDirectoryEntryOffset;
     int iFileNameLength;
-    DWORD dwSectorCluster;
+    DWORD dwSecondCluster;
     FILE* pstFile;
 
     iFileNameLength = kStrLen(pcFileName);
@@ -455,7 +455,7 @@ FILE* kOpenFile(const char* pcFileName, const char* pcMode)
     }
     else if(pcMode[0] == 'w')
     {
-        if(kGetClusterLinkData(stEntry.dwStartClusterIndex, &dwSectorCluster) == FALSE)
+        if(kGetClusterLinkData(stEntry.dwStartClusterIndex, &dwSecondCluster) == FALSE)
         {
             kUnlock(&(gs_stFileSystemManager.stMutex));
             return NULL;
@@ -466,7 +466,7 @@ FILE* kOpenFile(const char* pcFileName, const char* pcMode)
             kUnlock(&(gs_stFileSystemManager.stMutex));
             return NULL;
         }
-        if(kFreeClusterUntilEnd(dwSectorCluster) == FALSE)
+        if(kFreeClusterUntilEnd(dwSecondCluster) == FALSE)
         {
             kUnlock(&(gs_stFileSystemManager.stMutex));
             return NULL;
@@ -491,6 +491,7 @@ FILE* kOpenFile(const char* pcFileName, const char* pcMode)
     pstFile->stFileHandle.iDirectoryEntryOffset = iDirectoryEntryOffset;
     pstFile->stFileHandle.dwFileSize = stEntry.dwFileSize;
     pstFile->stFileHandle.dwStartClusterIndex = stEntry.dwStartClusterIndex;
+    pstFile->stFileHandle.dwCurrentClusterIndex = stEntry.dwStartClusterIndex;
     pstFile->stFileHandle.dwPreviousClusterIndex = stEntry.dwStartClusterIndex;
     pstFile->stFileHandle.dwCurrentOffset = 0;
 
@@ -543,7 +544,7 @@ DWORD kReadFile(void* pvBuffer, DWORD dwSize, DWORD dwCount, FILE* pstFile)
         }
     }
     kUnlock(&(gs_stFileSystemManager.stMutex));
-    return dwReadCount;
+    return ( dwReadCount / dwSize );
 }
 
 static BOOL kUpdateDirectoryEntry(FILEHANDLE* pstFileHandle)
@@ -606,7 +607,7 @@ DWORD kWriteFile(const void* pvBuffer, DWORD dwSize, DWORD dwCount, FILE* pstFil
                 break;
         }
 
-        dwOffsetInCluster = pstFileHandle->dwCurrentClusterIndex % FILESYSTEM_CLUSTERSIZE;
+        dwOffsetInCluster = pstFileHandle->dwCurrentOffset  % FILESYSTEM_CLUSTERSIZE;
         dwCopySize = MIN(FILESYSTEM_CLUSTERSIZE - dwOffsetInCluster, dwTotalCount - dwWriteCount);
         kMemCpy(gs_vbTempBuffer + dwOffsetInCluster, (char*)pvBuffer + dwWriteCount, dwCopySize);
 
@@ -630,7 +631,7 @@ DWORD kWriteFile(const void* pvBuffer, DWORD dwSize, DWORD dwCount, FILE* pstFil
         kUpdateDirectoryEntry(pstFileHandle);
     }
     kUnlock(&gs_stFileSystemManager.stMutex);
-    return dwWriteCount;
+    return dwWriteCount/dwSize;
 }
 
 BOOL kWriteZero(FILE* pstFile, DWORD dwCount)
@@ -654,7 +655,7 @@ BOOL kWriteZero(FILE* pstFile, DWORD dwCount)
     while(dwRemainCount != 0)
     {
         dwWriteCount = MIN(dwRemainCount, FILESYSTEM_CLUSTERSIZE);
-        if(kWriteFile(pbBuffer, 1, dwWriteCount, pstFile) != dwCount)
+        if(kWriteFile(pbBuffer, 1, dwWriteCount, pstFile) != dwWriteCount )
         {
             kFreeMemory(pbBuffer);
             return FALSE;
