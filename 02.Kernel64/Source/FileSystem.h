@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "Synchronization.h"
 #include "HardDisk.h"
+#include "CacheManager.h"
 
 #define FILESYSTEM_SIGNATURE                0x7e38cf10
 #define FILESYSTEM_SECTORSPERCLUSTER        0x8
@@ -111,11 +112,10 @@ typedef struct kFileDirectoryHandleStruct
     };
 }FILE, DIR;
 
-#pragma pack(pop)
 
 typedef struct kFileSystemManagerStruct
 {
-    char reserved[3];
+    // char reserved[3];
 
     BOOL bMounted;
 
@@ -129,7 +129,9 @@ typedef struct kFileSystemManagerStruct
 
     MUTEX stMutex;
     FILE* pstHandlePool;
+    BOOL bCacheEnable;
 }FILESYSTEMMANAGER;
+#pragma pack(pop)
 
 //책에 있는 위치랑 비교
 
@@ -152,6 +154,28 @@ static BOOL kGetDirectoryEntryData(int iIndex, DIRECTORYENTRY* pstEntry);
 static int kFindDirectoryEntry(const char* pcFileName, DIRECTORYENTRY* pstEntry);
 void kGetFileSystemInformation(FILESYSTEMMANAGER* pstManager);
 
+static void* kAllocateFileDirectoryHandle(void);
+static void kFreeFileDirectoryHandle(FILE* pstFile);
+static BOOL kCreateFile(const char* pcFileName, DIRECTORYENTRY* pstEntry, int* piDirectoryEntryIndex);
+static BOOL kFreeClusterUntilEnd(DWORD dwClusterIndex);
+static BOOL kUpdateDirectoryEntry(FILEHANDLE* pstFileHandle);
+
+static BOOL kInternalReadClusterLinkTableWithoutCache(DWORD dwOffset, BYTE* pbBuffer);
+static BOOL kInternalReadClusterLinkTableWithCache(DWORD dwOffset, BYTE* pbBuffer);
+
+static BOOL kInternalWriteClusterLinkTableWithoutCache(DWORD dwOffset, BYTE* pbBuffer);
+static BOOL kInternalWriteClusterLinkTableWithCache(DWORD dwOffset, BYTE* pbBuffer);
+
+static BOOL kInternalReadClusterWithoutCache(DWORD dwOffset, BYTE* pbBuffer);
+static BOOL kInternalReadClusterWithCache(DWORD dwOffset, BYTE* pbBuffer);
+
+static BOOL kInternalWriteClusterWithoutCache(DWORD dwOffset, BYTE* pbBuffer);
+static BOOL kInternalWriteClusterWithCache(DWORD dwOffset, BYTE* pbBuffer);
+
+
+static CACHEBUFFER* kAllocateCacheBufferWithFlush(int iCacheTableIndex);
+BOOL kFlushFileSystemCache(void);
+
 
 FILE* kOpenFile(const char* pcFileName, const char* pcMode);
 DWORD kReadFile(void* pvBuffer, DWORD dwSize, DWORD dwCount, FILE* pstFile);
@@ -166,10 +190,5 @@ BOOL kWriteZero(FILE* pstFile, DWORD dwCount);
 
 BOOL kIsFileOpened(const DIRECTORYENTRY* pstEntry);
 
-static void* kAllocateFileDirectoryHandle(void);
-static void kFreeFileDirectoryHandle(FILE* pstFile);
-static BOOL kCreateFile(const char* pcFileName, DIRECTORYENTRY* pstEntry, int* piDirectoryEntryIndex);
-static BOOL kFreeClusterUntilEnd(DWORD dwClusterIndex);
-static BOOL kUpdateDirectoryEntry(FILEHANDLE* pstFileHandle);
 
 #endif

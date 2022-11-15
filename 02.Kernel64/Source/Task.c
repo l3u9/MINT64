@@ -6,7 +6,7 @@
 static SCHEDULER gs_stScheduler;
 static TCBPOOLMANAGER gs_stTCBPoolManager;
 
-// task pool �??�� ?��?��?��
+// task pool
 static void kInitializeTCBPool(void)
 {
     int i;
@@ -37,7 +37,6 @@ static TCB* kAllocateTCB(void)
 
     for(i = 0; i < gs_stTCBPoolManager.iMaxCount; i++)
     {
-        //ID?�� ?��?�� 32비트�? 0?���? ?��?��?���? ?��??? TCB
         if((gs_stTCBPoolManager.pstStartAddress[i].stLink.qwID >> 32) == 0)
         {
             pstEmptyTCB = &(gs_stTCBPoolManager.pstStartAddress[i]);
@@ -45,7 +44,6 @@ static TCB* kAllocateTCB(void)
         }
     }
 
-    //?��?�� 32비트�? 0?�� ?��?�� 값으�? ?��?��?��?�� ?��?��?�� TCB�? ?��?��?��?��.
     pstEmptyTCB->stLink.qwID = ((QWORD)gs_stTCBPoolManager.iAllocatedCount<<32) | i;
     gs_stTCBPoolManager.iUseCount++;
     gs_stTCBPoolManager.iAllocatedCount++;
@@ -451,7 +449,6 @@ BOOL kEndTask(QWORD qwTaskID)
         kUnlockForSystemData(bPreviousFlag);
         kSchedule();
 
-        //?��?��?�� ?��?��?�� ?��?��?���?�? ?�� 구문??? ?��?��?���? ?��?��?��.
         while(1);
     }
     else
