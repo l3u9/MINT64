@@ -10,6 +10,8 @@
 #include "DynamicMemory.h"
 #include "HardDisk.h"
 #include "FileSystem.h"
+#include "SerialPort.h"
+
 
 void Main( void )
 {
@@ -91,6 +93,10 @@ void Main( void )
     }
     
 
+    kPrintf("Serial Port Initialize......................[Pass]\n");
+    iCursorY++;
+    kInitializeSerialPort();
+    
     // 유휴 태스크를 시스템 스레드로 생성하고 쉘을 시작
     kCreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_THREAD | TASK_FLAGS_SYSTEM, 0, 0, (QWORD)kIdleTask);
     kStartConsoleShell();

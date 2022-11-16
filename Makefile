@@ -1,4 +1,7 @@
-all : BootLoader Kernel32 Kernel64 ImageMaker Disk.img
+all : BootLoader Kernel32 Kernel64 NetworkTransfer ImageMaker Disk.img
+
+NetworkTransfer:
+	make -C 04.Utility/01.SerialTransfer
 
 ImageMaker:
 	make -C 04.Utility/00.ImageMaker
@@ -67,3 +70,4 @@ clean:
 	make -C 02.Kernel64 clean
 	rm -f Disk.img
 	rm -f ImageMaker*
+	rm -f NetworkTransfer

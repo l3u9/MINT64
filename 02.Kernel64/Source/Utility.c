@@ -18,7 +18,7 @@ void kMemSet(void* pvDestination, BYTE bData, int iSize)
         ((QWORD*)pvDestination)[i] = qwData;
 
     iRemainByteStartoffset = i * 8;
-    for(i = 0; i < iSize; i++)
+    for(i = 0; i < iSize % 8; i++)
     {
         ((char*) pvDestination)[iRemainByteStartoffset] = bData;
     }

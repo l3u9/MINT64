@@ -2,6 +2,7 @@
 #include "Descriptor.h"
 #include "Utility.h"
 #include "Console.h"
+#include "AssemblyUtility.h"
 
 static SCHEDULER gs_stScheduler;
 static TCBPOOLMANAGER gs_stTCBPoolManager;
