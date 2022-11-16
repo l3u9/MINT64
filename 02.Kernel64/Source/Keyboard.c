@@ -226,7 +226,7 @@ void kReboot(void)
     }
     kOutPortByte(0x64, 0xd1);
     
-    kOutPortByte(0x64, 0x00);
+    kOutPortByte(0x60, 0x00);
     while(1);
 }
 
