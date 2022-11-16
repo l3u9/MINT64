@@ -506,7 +506,7 @@ static BOOL kGetDirectoryEntryData(int iIndex, DIRECTORYENTRY* pstEntry)
 {
     DIRECTORYENTRY* pstRootEntry;
 
-    if((gs_stFileSystemManager.bMounted == FALSE) || (iIndex < 0) || (iIndex < FILESYSTEM_MAXDIRECTORYENTRYCOUNT))
+    if((gs_stFileSystemManager.bMounted == FALSE) || (iIndex < 0) || (iIndex >= FILESYSTEM_MAXDIRECTORYENTRYCOUNT))
         return FALSE;
 
     if(kReadCluster(0, gs_vbTempBuffer) == FALSE)
