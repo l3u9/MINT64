@@ -7,12 +7,20 @@ BOOL kInitializeKernel64Area(void);
 BOOL kIsMemoryEnough(void);
 void kCopyKernel64ImageTo2Mbyte(void);
 
+#define BOOTSTRAPPROCESSOR_FLAGADDRESS 0x7C09
+
 void Main(void)
 {
 
     DWORD i;
     DWORD dwEAX, dwEBX, dwECX, dwEDX;
     char vcVendorString[13] = {0, };
+
+    if(*((BYTE*) BOOTSTRAPPROCESSOR_FLAGADDRESS) == 0)
+    {
+        kSwitchAndExecute64bitKernel();
+        while(1);
+    }
 
     kPrintString( 0, 3, "Protected Mode C Language Kernel Start......[Pass]" );
     kPrintString( 0, 4, "Minimum Memory Size Check...................[    ]" );

@@ -13,6 +13,7 @@ TOTALSECTORCOUNT: dw 0x02
 
 KERNEL32SECTORCOUNT: dw 0x02 ;보호 모드 커널의 총 섹터 수
 
+BOOTSTARTPROCESSOR: db 0x01
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; CODE SECTION

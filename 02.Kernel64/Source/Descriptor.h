@@ -36,11 +36,11 @@
 
 #define GDT_MAXENTRY8COUNT          3
 
-#define GDT_MAXENTRY16COUNT         1
+#define GDT_MAXENTRY16COUNT         MAXPROCESSORCOUNT
 
 
 #define GDT_TABLESIZE               ((sizeof(GDTENTRY8) * GDT_MAXENTRY8COUNT) + (sizeof(GDTENTRY16) * GDT_MAXENTRY16COUNT))
-#define TSS_SEGMENTSIZE             (sizeof(TSSSEGMENT))
+#define TSS_SEGMENTSIZE             (sizeof(TSSSEGMENT) * MAXPROCESSORCOUNT)
 
 #define IDT_TYPE_INTERRUPT          0x0e
 #define IDT_TYPE_TRAP               0x0f

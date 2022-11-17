@@ -25,7 +25,7 @@ BOOL kFindMPFloatingPointerAddress(QWORD* pstAddress)
         }
     }
 
-    qwSystemBaseMemory = *(WORD*)0x413;
+    qwSystemBaseMemory = *(WORD*)0x0413;
     qwSystemBaseMemory *= 1024;
 
     for(pcMPFloatingPointer = (char*)(qwSystemBaseMemory - 1024); (QWORD) pcMPFloatingPointer <= qwSystemBaseMemory; pcMPFloatingPointer++)

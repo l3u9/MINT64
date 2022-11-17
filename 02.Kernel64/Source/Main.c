@@ -11,19 +11,25 @@
 #include "HardDisk.h"
 #include "FileSystem.h"
 #include "SerialPort.h"
+#include "MultiProcessor.h"
+
+void MainForApplicationProcessor(void);
 
 
 void Main( void )
 {
     int iCursorX, iCursorY;
 
-    // �ܼ��� ���� �ʱ�ȭ�� ��, ���� �۾��� ����
+    if(*((BYTE*) BOOTSTRAPPROCESSOR_FLAGADDRESS) == 0)
+        MainForApplicationProcessor();
+
+    *((BYTE*)BOOTSTRAPPROCESSOR_FLAGADDRESS) = 0;
+
     kInitializeConsole( 0, 10 );
     kPrintf( "Switch To IA-32e Mode Success~!!\n" );
     kPrintf( "IA-32e C Language Kernel Start..............[Pass]\n" );
     kPrintf( "Initialize Console..........................[Pass]\n" );
 
-    // ���� ��Ȳ�� ȭ�鿡 ���?
     kGetCursor( &iCursorX, &iCursorY );
     kPrintf( "GDT Initialize And Switch For IA-32e Mode...[    ]" );
     kInitializeGDTTableAndTSS();
@@ -100,4 +106,25 @@ void Main( void )
     // 유휴 태스크를 시스템 스레드로 생성하고 쉘을 시작
     kCreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_THREAD | TASK_FLAGS_SYSTEM, 0, 0, (QWORD)kIdleTask);
     kStartConsoleShell();
+}
+
+void MainForApplicationProcessor(void)
+{
+    QWORD qwTickCount;
+    kLoadGDTR(GDTR_STARTADDRESS);
+
+    kLoadTR(GDT_TSSSEGMENT + (kGetAPICID() * sizeof(GDTENTRY16)));
+
+    kLoadIDTR(IDTR_STARTADDRESS);
+
+    qwTickCount = kGetTickCount();
+    while(1)
+    {
+        if(kGetTickCount() - qwTickCount > 1000)
+        {
+            qwTickCount = kGetTickCount();
+
+            kPrintf("Application Processor[APIC ID: %d] Is Activated\n", kGetAPICID());
+        }
+    }
 }

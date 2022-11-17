@@ -9,8 +9,25 @@ SECTION .text
 
 START:
     mov ax, 0x1000
+
     mov ds, ax
     mov es, ax
+ 
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Application Processor 이면 아래의 과정을 모두 뛰어넘어서 보호 모드 커널로 이동
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ 
+ 
+    mov ax, 0x0000
+    mov es, ax
+ 
+    cmp byte [ es: 0x7c09], 0x00
+    je .APPLICATIONPROCESSORSTARTPOINT
+
+
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ ; Bootstrap Processor만 실행하는 부분
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ; Enable A20 Gate
@@ -28,7 +45,13 @@ START:
     and al, 0xfe
     out 0x92, al
 
+
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ ; Bootstrap Processor와 Application Processor가 공통으로 수행하는 부분
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 .A20GATESUCCESS:
+.APPLICATIONPROCESSORSTARTPOINT:
     cli ; setting disable interupt occured
     lgdt [GDTR] ; GDT table load GDTR data Structure to Processor
     
@@ -63,6 +86,9 @@ PROTECTEDMODE:
     mov esp, 0xfffe
     mov ebp, 0xfffe
 
+    ;; AP이면 아래 과정을 모두 뛰어넘어서 C 언어 커널 엔트리 포인트로 이동
+    cmp byte[0x7c09] , 0x00
+    je .APPLICATIONPROCESSORSTARTPOINT
 
     ;print message "Switch To Protected Mode Success ~!!"
     push (SWITCHSUCCESSMESSAGE - $$ + 0x10000)
@@ -72,6 +98,7 @@ PROTECTEDMODE:
     add esp, 12
 
     ;jmp dword 0x08:0x10200
+    .APPLICATIONPROCESSORSTARTPOINT
     jmp dword 0x18:0x10200 ;C 언어 커널이 존재하는 0x10200 어드레스로 이동하여 C언어 커널 수행
 
 

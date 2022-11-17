@@ -4,6 +4,7 @@ SECTION .text
 
 ;외부에서 정의된 함수를 쓸 수 있도록 선언 (import)
 extern Main
+extern g_qwAPICIDAddress, g_iWakeUpApplicationProcessorCount
 
 ;코드 영역
 START:
@@ -18,6 +19,23 @@ START:
     mov rsp, 0x6ffff8
     mov rbp, 0x6ffff8
 
+    cmp byte [0x7c09], 0x01
+    je .BOOTSTRAPPROCESSORSTARTPOINT
+
+    mov rax, 0
+    mov rbx, qword [g_qwAPICIDAddress]
+    mov eax, dword [rbx]
+    shr rax, 24
+
+    mov rbx, 0x10000
+    mul rbx
+
+    sub rsp, rax
+    sub rbp, rax
+
+    lock inc dword [g_iWakeUpApplicationProcessorCount]
+
+.BOOTSTRAPPROCESSORSTARTPOINT
     call Main
     jmp $
 
