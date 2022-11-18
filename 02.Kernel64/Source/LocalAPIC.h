@@ -26,10 +26,10 @@
 #define APIC_DELIVERYMODE_EXTINT                    0x000700
 
 #define APIC_DESTINATIONMODE_PHYSICAL               0x000000
-#define APIC_DESTINATIONMODE_LOGICAL                0x008000
+#define APIC_DESTINATIONMODE_LOGICAL                0x000800
 
 #define APIC_DELIVERYSTATUS_IDLE                    0x000000
-#define APIC_DELIVERYSTATUS_PENDING                0x001000
+#define APIC_DELIVERYSTATUS_PENDING                 0x001000
 
 #define APIC_LEVEL_DEASSERT                         0x000000
 #define APIC_LEVEL_ASSERT                           0x004000
@@ -42,7 +42,19 @@
 #define APIC_DESTINATIONSHORTHAND_ALLINCLUDINGSELF  0x080000
 #define APIC_DESTINATIONSHORTHAND_ALLEXCLUDINGSELF  0x0C0000
 
+#define APIC_INTERRUPT_MASK                         0x010000
+
+#define APIC_TIMERMODE_PERIODIC                     0x020000
+#define APIC_TIMERMODE_ONESHOT                      0x000000
+
+#define APIC_POLARITY_ACTIVELOW                     0x002000
+#define APIC_POLARITY_ACTIVEHIGH                    0x000000
+
+
 QWORD kGetLocalAPICBaseAddress(void);
 void kEnableSoftwareLocalAPIC(void);
+void kSendEOIToLocalAPIC(void);
+void kSetTaskPriority(BYTE bPriority);
+void kInitializeLocalVectorTable(void);
 
 #endif
