@@ -6,9 +6,9 @@ global kInPortByte, kOutPortByte, kInPortWord, kOutPortWord
 global kLoadGDTR, kLoadTR, kLoadIDTR
 global kEnableInterrupt, kDisableInterrupt, kReadRFLAGS
 global kReadTSC
-global kSwitchContext, kHlt, kTestAndSet
+global kSwitchContext, kHlt, kTestAndSet, kPause
 global kInitializeFPU, kSaveFPUContext, kLoadFPUContext, kSetTS, kClearTS
-global kEnableGlobalLocalAPIC,
+global kEnableGlobalLocalAPIC
 
 ;포트로부터 1바이트 읽음
 kInPortByte:
@@ -255,4 +255,8 @@ kEnableGlobalLocalAPIC:
     pop rdx
     pop rcx
     pop rax
+    ret
+
+kPause:
+    kPause
     ret

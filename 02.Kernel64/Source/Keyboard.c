@@ -481,6 +481,8 @@ BOOL kInitializeKeyboard(void)
 {
     kInitializeQueue(&gs_stKeyQueue, gs_vsKeyQueueBuffer, KEY_MAXQUEUECOUNT, sizeof(KEYDATA));
 
+    kInitializeSpinLock(&(gs_stKeyboardManager.stSpinLock));
+
     return kActivateKeyboard();
 }
 
@@ -488,17 +490,16 @@ BOOL kConvertScanCodeAndPutQueue(BYTE bScanCode)
 {
     KEYDATA stData;
     BOOL bResult = FALSE;
-    BOOL bPReviousInterrupt;
 
     stData.bScanCode = bScanCode;
 
     if(kConvertScanCodeToASCIICode(bScanCode, &(stData.bASCIICode), &(stData.bFlags)) == TRUE)
     {
-        bPReviousInterrupt = kSetInterruptFlag(FALSE);
+        kLockForSpinLock(&(gs_stKeyboardManager.stSpinLock));
 
         bResult = kPutQueue(&gs_stKeyQueue, &stData);
 
-        kSetInterruptFlag(bPReviousInterrupt);
+        kUnlockForSpinLock(&(gs_stKeyboardManager.stSpinLock));
     }
     return bResult;
 }
@@ -506,17 +507,16 @@ BOOL kConvertScanCodeAndPutQueue(BYTE bScanCode)
 BOOL kGetKeyFromKeyQueue(KEYDATA* pstData)
 {
     BOOL bResult;
-    BOOL bPreviousInterrupt;
 
     if(kIsQueueEmpty(&gs_stKeyQueue) == TRUE)
     {
         return FALSE;
     }
 
-    bPreviousInterrupt = kSetInterruptFlag(FALSE);
+    kLockForSpinLock(&(gs_stKeyboardManager.stSpinLock));
     bResult = kGetQueue(&gs_stKeyQueue, pstData);
 
-    kSetInterruptFlag(bPreviousInterrupt);
+    kUnlockForSpinLock(&(gs_stKeyboardManager.stSpinLock));
     return bResult;
 }
 
