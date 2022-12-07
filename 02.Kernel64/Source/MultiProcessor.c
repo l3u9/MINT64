@@ -73,6 +73,7 @@ static BOOL kWakeUpApplicationProcessor(void)
 
     while(g_iWakeUpApplicationProcessorCount < (pstMPManager->iProcessorCount - 1))
         kSleep(50);
+
     return TRUE;
 }
 
