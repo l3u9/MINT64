@@ -4,6 +4,7 @@
 #include "AssemblyUtility.h"
 
 #if 0
+
 BOOL kLockForSystemData(void)
 {
     return kSetInterruptFlag(FALSE);
@@ -13,7 +14,6 @@ void kUnlockForSystemData(BOOL bInterruptFlag)
 {
     kSetInterruptFlag(bInterruptFlag);
 }
-
 #endif
 
 void kInitializeMutex(MUTEX* pstMutex)
@@ -60,7 +60,6 @@ void kUnlock(MUTEX* pstMutex)
     pstMutex->bLockFlag = FALSE;
 }
 
-
 void kInitializeSpinLock(SPINLOCK* pstSpinLock)
 {
     pstSpinLock->bLockFlag = FALSE;
@@ -78,12 +77,14 @@ void kLockForSpinLock(SPINLOCK* pstSpinLock)
     if(kTestAndSet(&(pstSpinLock->bLockFlag), 0, 1) == FALSE)
     {
         if(pstSpinLock->bAPICID == kGetAPICID())
-        {   pstSpinLock->dwLockCount++;
+        {
+            pstSpinLock->dwLockCount++;
             return;
         }
+
         while(kTestAndSet(&(pstSpinLock->bLockFlag), 0, 1) == FALSE)
         {
-            while(pstSpinLock->bLockFlag == TRUE)
+            while(pstSpinLock->bLockFlag == FALSE)
                 kPause();
         }
     }
@@ -114,10 +115,11 @@ void kUnlockForSpinLock(SPINLOCK* pstSpinLock)
     }
 
     bInterruptFlag = pstSpinLock->bInterruptFlag;
+
     pstSpinLock->bAPICID = 0xff;
     pstSpinLock->dwLockCount = 0;
     pstSpinLock->bInterruptFlag = FALSE;
     pstSpinLock->bLockFlag = FALSE;
-
     kSetInterruptFlag(bInterruptFlag);
 }
+

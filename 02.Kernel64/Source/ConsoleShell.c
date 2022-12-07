@@ -1908,80 +1908,176 @@ static void kShowIRQINTINMappingTable(const char* pcParameterBuffer)
     kPrintIRQToINTINMap();
 }
 
-static void kShowInterruptProcessingCount(const char* pcParameterBuffer)
+// static void kShowInterruptProcessingCount(const char* pcParameterBuffer)
+// {
+//     INTERRUPTMANAGER* pstInterruptManager;
+//     int i;
+//     int j;
+//     int iProcessCount;
+//     char vcBuffer[20];
+//     int iRemainLength;
+//     int iLineCount;
+
+//     kPrintf("================= ==== Interrupt Count =============== =======\n");
+
+//     iProcessCount = kGetProcessorCount();
+
+//     for(i = 0; i < iProcessCount; i++)
+//     {
+//         if(i == 0)
+//             kPrintf("IRQ Num\t\t");
+//         else if((i % 4) == 0)
+//             kPrintf("\n     \t\t");
+        
+//         kSPrintf(vcBuffer, "Core %d", i);
+//         kPrintf(vcBuffer);
+
+//         iRemainLength = 15 - kStrLen(vcBuffer);
+//         kMemSet(vcBuffer, ' ', iRemainLength);
+//         vcBuffer[iRemainLength] = '\0';
+//         kPrintf(vcBuffer);
+//     }
+
+//     kPrintf("\n");
+
+//     iLineCount = 0;
+//     pstInterruptManager = kGetInterruptManager();
+//     for(i = 0; i < INTERRUPT_MAXVECTORCOUNT; i++)
+//     {
+//         for(j = 0; j < iProcessCount; j++)
+//         {
+//             if(j == 0)
+//             {
+//                 if((iLineCount != 0) && (iLineCount > 10))
+//                 {
+//                     kPrintf("\nPress any key to continue... ('q' is exit) : ");
+//                     if(kGetCh() == 'q')
+//                     {
+//                         kPrintf("\n");
+//                         return;
+//                     }
+//                     iLineCount = 0;
+//                     kPrintf("\n");
+//                 }
+//                 kPrintf("-------------------------------------------------------\n");
+//                 kPrintf("IRQ %d\t\t", i);
+//                 iLineCount += 2;
+//             }
+//             else if((j % 4) == 0)
+//             {
+//                 kPrintf("\n     \t\t");
+//                 iLineCount++;
+//             }
+
+//             kSPrintf(vcBuffer, "0x%Q", pstInterruptManager->vvqwCoreInterruptCount[j][i]);
+//             kPrintf(vcBuffer);
+//             iRemainLength = 15 - kStrLen(vcBuffer);
+//             kMemSet(vcBuffer, ' ', iRemainLength);
+//             vcBuffer[iRemainLength] = '\0';
+//             kPrintf(vcBuffer);
+//         }
+//         kPrintf("\n");
+//     }
+// }
+
+// static void kStartInterruptLoadBalancing(const char* pcParameterBuffer)
+// {
+//     kPrintf("Start Interrupt Load Balancing\n");
+//     kSetInterruptLoadBalancing(TRUE);
+// }
+static void kShowInterruptProcessingCount( const char* pcParameterBuffer )
 {
     INTERRUPTMANAGER* pstInterruptManager;
     int i;
     int j;
     int iProcessCount;
-    char vcBuffer[20];
+    char vcBuffer[ 20 ];
     int iRemainLength;
     int iLineCount;
-
-    kPrintf("================= ==== Interrupt Count =============== =======\n");
-
+    
+    kPrintf( "========================== Interrupt Count ==========================\n" );
+    
+    // MP 설정 테이블에 저장된 코어의 개수를 읽음
     iProcessCount = kGetProcessorCount();
-
-    for(i = 0; i < iProcessCount; i++)
+    
+    //==========================================================================
+    //  Column 출력
+    //==========================================================================
+    // 프로세서의 수만큼 Column을 출력
+    // 한 줄에 코어 4개씩 출력하고 한 Column당 15칸을 할당함
+    for( i = 0 ; i < iProcessCount ; i++ )
     {
-        if(i == 0)
-            kPrintf("IRQ Num\t\t");
-        else if((i % 4) == 0)
-            kPrintf("\n     \t\t");
+        if( i == 0 )
+        {
+            kPrintf( "IRQ Num\t\t" );
+        }
+        else if( ( i % 4 ) == 0 )
+        {
+            kPrintf( "\n       \t\t" );
+        }
+        kSPrintf( vcBuffer, "Core %d", i );
+        kPrintf( vcBuffer );
         
-        kSPrintf(vcBuffer, "Core %d", i);
-        kPrintf(vcBuffer);
-
-        iRemainLength = 15 - kStrLen(vcBuffer);
-        kMemSet(vcBuffer, ' ', iRemainLength);
-        vcBuffer[iRemainLength] = '\0';
-        kPrintf(vcBuffer);
+        // 출력하고 남은 공간을 모두 스페이스로 채움
+        iRemainLength = 15 - kStrLen( vcBuffer );
+        kMemSet( vcBuffer, ' ', iRemainLength );
+        vcBuffer[ iRemainLength ] = '\0';
+        kPrintf( vcBuffer );
     }
+    kPrintf( "\n" );
 
-    kPrintf("\n");
-
+    //==========================================================================
+    //  Row와 인터럽트 처리 횟수 출력
+    //==========================================================================
+    // 총 인터럽트 횟수와 코어 별 인터럽트 처리 횟수를 출력
     iLineCount = 0;
     pstInterruptManager = kGetInterruptManager();
-    for(i = 0; i < INTERRUPT_MAXVECTORCOUNT; i++)
+    for( i = 0 ; i < INTERRUPT_MAXVECTORCOUNT ; i++ )
     {
-        for(j = 0; j < iProcessCount; j++)
+        for( j = 0 ; j < iProcessCount ; j++ )
         {
-            if(j == 0)
+            // Row를 출력, 한 줄에 코어 4개씩 출력하고 한 Column당 15칸을 할당
+            if( j == 0 )
             {
-                if((iLineCount != 0) && (iLineCount > 10))
+                // 20 라인마다 화면 정지
+                if( ( iLineCount != 0 ) && ( iLineCount > 10 ) )
                 {
-                    kPrintf("\nPress any key to continue... ('q' is exit) : ");
-                    if(kGetCh() == 'q')
+                    kPrintf( "\nPress any key to continue... ('q' is exit) : " );
+                    if( kGetCh() == 'q' )
                     {
-                        kPrintf("\n");
-                        return;
+                        kPrintf( "\n" );
+                        return ;
                     }
                     iLineCount = 0;
-                    kPrintf("\n");
+                    kPrintf( "\n" );
                 }
-                kPrintf("-------------------------------------------------------\n");
-                kPrintf("IRQ %d\t\t", i);
+                kPrintf( "---------------------------------------------------------------------\n" );
+                kPrintf( "IRQ %d\t\t", i );
                 iLineCount += 2;
             }
-            else if((j % 4) == 0)
+            else if( ( j % 4 ) == 0 )
             {
-                kPrintf("\n     \t\t");
+                kPrintf( "\n      \t\t" );
                 iLineCount++;
             }
-
-            kSPrintf(vcBuffer, "0x%Q", pstInterruptManager->vvqwCoreInterruptCount[j][i]);
-            kPrintf(vcBuffer);
-            iRemainLength = 15 - kStrLen(vcBuffer);
-            kMemSet(vcBuffer, ' ', iRemainLength);
-            vcBuffer[iRemainLength] = '\0';
-            kPrintf(vcBuffer);
+            
+            kSPrintf( vcBuffer, "0x%Q", pstInterruptManager->vvqwCoreInterruptCount[ j ][ i ] );
+            // 출력하고 남은 영역을 모두 스페이스로 채움
+            kPrintf( vcBuffer );
+            iRemainLength = 15 - kStrLen( vcBuffer );
+            kMemSet( vcBuffer, ' ', iRemainLength );
+            vcBuffer[ iRemainLength ] = '\0';
+            kPrintf( vcBuffer );
         }
-        kPrintf("\n");
+        kPrintf( "\n" );
     }
 }
 
-static void kStartInterruptLoadBalancing(const char* pcParameterBuffer)
+/**
+ *  인터럽트 부하 분산 기능을 시작
+ */
+static void kStartInterruptLoadBalancing( const char* pcParameterBuffer )
 {
-    kPrintf("Start Interrupt Load Balancing\n");
-    kSetInterruptLoadBalancing(TRUE);
+    kPrintf( "Start Interrupt Load Balancing\n" );
+    kSetInterruptLoadBalancing( TRUE );
 }

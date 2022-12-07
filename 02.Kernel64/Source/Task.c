@@ -74,6 +74,7 @@ TCB* kCreateTask(QWORD qwFlags, void *pvMemoryAddress, QWORD qwMemorySize ,QWORD
     void* pvStackAddress;
 
     kLockForSpinLock(&(gs_stScheduler.stSpinLock));
+
     pstTask = kAllocateTCB();
     if(pstTask == NULL)
     {
@@ -117,7 +118,7 @@ TCB* kCreateTask(QWORD qwFlags, void *pvMemoryAddress, QWORD qwMemorySize ,QWORD
 
     pstTask->bFPUUsed = FALSE;
 
-    kUnlockForSpinLock(&(gs_stScheduler.stSpinLock));
+    kLockForSpinLock(&(gs_stScheduler.stSpinLock));
 
     kAddTaskToReadyList(pstTask);
 
@@ -190,7 +191,6 @@ void kInitializeScheduler(void)
     gs_stScheduler.qwSpendProcessorTimeInIdleTask = 0;
     gs_stScheduler.qwProcessorLoad = 0;
     gs_stScheduler.qwLastFPUUsedTaskID = TASK_INVALIDID;
-
     kInitializeSpinLock(&(gs_stScheduler.stSpinLock));
 }
 
@@ -202,12 +202,10 @@ static void kSetRunningTask(TCB* pstTask)
     gs_stScheduler.pstRunningTask = pstTask;
 
     kUnlockForSpinLock(&(gs_stScheduler.stSpinLock));
-
 }
 
 TCB* kGetRunningTask(void)
 {
-    BOOL bPreviousFlag;
     TCB* pstRunningTask;
 
     kLockForSpinLock(&(gs_stScheduler.stSpinLock));
@@ -286,7 +284,6 @@ static TCB* kRemoveTaskFromReadyList(QWORD qwTaskID)
 BOOL kChangePriority(QWORD qwTaskID, BYTE bPriority)
 {
     TCB* pstTarget;
-    BOOL bPreviousFlag;
 
     if(bPriority > TASK_MAXREADYLISTCOUNT)
         return FALSE;
@@ -332,7 +329,6 @@ void kSchedule(void)
     bPreviouseFlag = kSetInterruptFlag(FALSE);
 
     kLockForSpinLock(&(gs_stScheduler.stSpinLock));
-
     pstNextTask = kGetNextTaskToRun();
     if(pstNextTask == NULL)
     {
@@ -442,7 +438,6 @@ BOOL kEndTask(QWORD qwTaskID)
 {
     TCB* pstTarget;
     BYTE bPriority;
-    BOOL bPreviousFlag;
 
     kLockForSpinLock(&(gs_stScheduler.stSpinLock));
 
@@ -451,7 +446,6 @@ BOOL kEndTask(QWORD qwTaskID)
     {
         pstTarget->qwFlags |= TASK_FLAGS_ENDTASK;
         SETPRIORITY(pstTarget->qwFlags, TASK_FLAGS_WAIT);
-
         kUnlockForSpinLock(&(gs_stScheduler.stSpinLock));
         kSchedule();
 
@@ -469,7 +463,7 @@ BOOL kEndTask(QWORD qwTaskID)
                 SETPRIORITY(pstTarget->qwFlags, TASK_FLAGS_WAIT);
             }
             kUnlockForSpinLock(&(gs_stScheduler.stSpinLock));
-            return TRUE;
+            return FALSE;
         }
 
         pstTarget->qwFlags |= TASK_FLAGS_ENDTASK;
@@ -505,6 +499,7 @@ int kGetTaskCount(void)
 {
     int iTotalCount;
 
+    
     iTotalCount = kGetReadyTaskCount();
 
     kLockForSpinLock(&(gs_stScheduler.stSpinLock));

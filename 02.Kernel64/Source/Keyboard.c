@@ -2,6 +2,7 @@
 #include "AssemblyUtility.h"
 #include "Queue.h"
 #include "Keyboard.h"
+#include "Synchronization.h"
 
 BOOL kIsOutputBufferFull(void)
 {

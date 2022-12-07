@@ -72,5 +72,4 @@ void kPrintIRQToINTINMap(void);
 void kRoutingIRQToAPICID(int iIRQ, BYTE bAPICID);
 
 
-
 #endif

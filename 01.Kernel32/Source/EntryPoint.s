@@ -98,7 +98,7 @@ PROTECTEDMODE:
     add esp, 12
 
     ;jmp dword 0x08:0x10200
-    .APPLICATIONPROCESSORSTARTPOINT
+.APPLICATIONPROCESSORSTARTPOINT
     jmp dword 0x18:0x10200 ;C 언어 커널이 존재하는 0x10200 어드레스로 이동하여 C언어 커널 수행
 
 

@@ -19,6 +19,7 @@ typedef struct kBitmapStruct
 typedef struct kDynamicMemoryManagerStruct
 {
     SPINLOCK stSpinLock;
+
     int iMaxLevelCount;
     int iBlockCountOfSmallestBlock;
     QWORD qwUsedSize;

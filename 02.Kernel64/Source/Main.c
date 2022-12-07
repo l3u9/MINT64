@@ -16,7 +16,7 @@
 void MainForApplicationProcessor(void);
 
 
-void Main( void )
+void Main(void)
 {
     int iCursorX, iCursorY;
 
@@ -25,35 +25,35 @@ void Main( void )
 
     *((BYTE*)BOOTSTRAPPROCESSOR_FLAGADDRESS) = 0;
 
-    kInitializeConsole( 0, 10 );
-    kPrintf( "Switch To IA-32e Mode Success~!!\n" );
-    kPrintf( "IA-32e C Language Kernel Start..............[Pass]\n" );
-    kPrintf( "Initialize Console..........................[Pass]\n" );
+    kInitializeConsole(0, 10);
+    kPrintf("Switch To IA-32e Mode Success~!!\n");
+    kPrintf("IA-32e C Language Kernel Start..............[Pass]\n");
+    kPrintf("Initialize Console..........................[Pass]\n");
 
-    kGetCursor( &iCursorX, &iCursorY );
-    kPrintf( "GDT Initialize And Switch For IA-32e Mode...[    ]" );
+    kGetCursor(&iCursorX, &iCursorY);
+    kPrintf("GDT Initialize And Switch For IA-32e Mode...[    ]");
     kInitializeGDTTableAndTSS();
-    kLoadGDTR( GDTR_STARTADDRESS );
-    kSetCursor( 45, iCursorY++ );
-    kPrintf( "Pass\n" );
+    kLoadGDTR(GDTR_STARTADDRESS);
+    kSetCursor(45, iCursorY++);
+    kPrintf("Pass\n");
 
-    kPrintf( "TSS Segment Load............................[    ]" );
-    kLoadTR( GDT_TSSSEGMENT );
-    kSetCursor( 45, iCursorY++ );
-    kPrintf( "Pass\n" );
+    kPrintf("TSS Segment Load............................[    ]");
+    kLoadTR(GDT_TSSSEGMENT);
+    kSetCursor(45, iCursorY++);
+    kPrintf("Pass\n");
 
-    kPrintf( "IDT Initialize..............................[    ]" );
+    kPrintf("IDT Initialize..............................[    ]");
     kInitializeIDTTables();
-    kLoadIDTR( IDTR_STARTADDRESS );
-    kSetCursor( 45, iCursorY++ );
-    kPrintf( "Pass\n" );
+    kLoadIDTR(IDTR_STARTADDRESS);
+    kSetCursor(45, iCursorY++);
+    kPrintf("Pass\n");
 
-    kPrintf( "Total RAM Size Check........................[    ]" );
+    kPrintf("Total RAM Size Check........................[    ]");
     kCheckTotalRAMSize();
-    kSetCursor( 45, iCursorY++ );
-    kPrintf( "Pass], Size = %d MB\n", kGetTotalRAMSize() );
+    kSetCursor(45, iCursorY++);
+    kPrintf("Pass], Size = %d MB\n", kGetTotalRAMSize());
 
-    kPrintf( "TCB Pool And Scheduler Initialize...........[Pass]\n" );
+    kPrintf("TCB Pool And Scheduler Initialize...........[Pass]\n");
     iCursorY++;
     kInitializeScheduler();
 
@@ -61,41 +61,41 @@ void Main( void )
     iCursorY++;
     kInitializeDynamicMemory();
 
-    kInitializePIT( MSTOCOUNT( 1 ), 1 );
+    kInitializePIT(MSTOCOUNT(1), 1);
 
-    kPrintf( "Keyboard Activate And Queue Initialize......[    ]" );
+    kPrintf("Keyboard Activate And Queue Initialize......[    ]");
 
-    if( kInitializeKeyboard() == TRUE )
+    if(kInitializeKeyboard() == TRUE)
     {
-        kSetCursor( 45, iCursorY++ );
-        kPrintf( "Pass\n" );
-        kChangeKeyboardLED( FALSE, FALSE, FALSE );
+        kSetCursor(45, iCursorY++);
+        kPrintf("Pass\n");
+        kChangeKeyboardLED(FALSE, FALSE, FALSE);
     }
     else
     {
-        kSetCursor( 45, iCursorY++ );
-        kPrintf( "Fail\n" );
-        while( 1 ) ;
+        kSetCursor(45, iCursorY++);
+        kPrintf("Fail\n");
+        while(1) ;
     }
 
-    kPrintf( "PIC Controller And Interrupt Initialize.....[    ]" );
+    kPrintf("PIC Controller And Interrupt Initialize.....[    ]");
     // PIC 컨트롤러 초기화 및 모든 인터럽 활성화
     kInitializePIC();
-    kMaskPICInterrupt( 0 );
+    kMaskPICInterrupt(0);
     kEnableInterrupt();
-    kSetCursor( 45, iCursorY++ );
-    kPrintf( "Pass\n" );
+    kSetCursor(45, iCursorY++);
+    kPrintf("Pass\n");
 
-    kPrintf( "File System Initialize......................[    ]" );
-    if( kInitializeFileSystem() == TRUE )
+    kPrintf("File System Initialize......................[    ]");
+    if(kInitializeFileSystem() == TRUE)
     {
-        kSetCursor( 45, iCursorY++ );
-        kPrintf( "Pass\n" );
+        kSetCursor(45, iCursorY++);
+        kPrintf("Pass\n");
     }
     else
     {
-        kSetCursor( 45, iCursorY++ );
-        kPrintf( "Fail\n" );
+        kSetCursor(45, iCursorY++);
+        kPrintf("Fail\n");
     }
     
 
@@ -111,20 +111,34 @@ void Main( void )
 void MainForApplicationProcessor(void)
 {
     QWORD qwTickCount;
+
     kLoadGDTR(GDTR_STARTADDRESS);
 
     kLoadTR(GDT_TSSSEGMENT + (kGetAPICID() * sizeof(GDTENTRY16)));
 
     kLoadIDTR(IDTR_STARTADDRESS);
+    
+    kEnableSoftwareLocalAPIC();
 
+    kSetTaskPriority(0);
+
+    kInitializeLocalVectorTable();
+
+    kEnableInterrupt();    
+
+    kPrintf("Application Processor[APIC ID: %d] Is Activated\n",
+            kGetAPICID());
+    
     qwTickCount = kGetTickCount();
+    
     while(1)
     {
         if(kGetTickCount() - qwTickCount > 1000)
         {
             qwTickCount = kGetTickCount();
-
-            kPrintf("Application Processor[APIC ID: %d] Is Activated\n", kGetAPICID());
+            
+            // kPrintf("Application Processor[APIC ID: %d] Is Activated\n",
+            //        kGetAPICID());
         }
     }
 }

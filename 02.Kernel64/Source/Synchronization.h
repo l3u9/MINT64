@@ -2,7 +2,6 @@
 #define __SYNCHRONIZATION_H__
 
 #include "Types.h"
-#include "MultiProcessor.h"
 
 #pragma pack(push, 1)
 
@@ -15,7 +14,6 @@ typedef struct kMutexStruct
 
     BYTE vbPadding[3];
 }MUTEX;
-
 
 typedef struct kSpinLockStruct
 {
@@ -31,14 +29,10 @@ typedef struct kSpinLockStruct
 
 #pragma pack(pop)
 
-
-
-
 #if 0
-BOOL kLockForSystemData(void);
+BOOL kLockFroSystemData(void);
 void kUnlockForSystemData(BOOL bInterruptFlag);
 #endif
-
 
 void kInitializeSpinLock(SPINLOCK* pstSpinLock);
 void kLockForSpinLock(SPINLOCK* pstSpinLock);

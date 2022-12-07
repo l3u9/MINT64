@@ -68,7 +68,6 @@ void kInitializeDynamicMemory(void)
     gs_stDynamicMemory.qwUsedSize = 0;
 
     kInitializeSpinLock(&(gs_stDynamicMemory.stSpinLock));
-
 }
 
 
@@ -191,8 +190,8 @@ static int kAllocationBuddyBlock(QWORD qwAlignedSize)
             iFreeOffset = iFreeOffset * 2;
         }
     }
-
     kUnlockForSpinLock(&(gs_stDynamicMemory.stSpinLock));
+
     return iFreeOffset;
 }
 

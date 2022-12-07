@@ -4,15 +4,13 @@
 #include "Types.h"
 #include "MultiProcessor.h"
 
-#define INTERRUPT_MAXVECTORCOUNT            16
-#define INTERRUPT_LOADBALANCINGDIVIDOR      10
+#define INTERRUPT_MAXVECTORCOUNT                16
+#define INTERRUPT_LOADBALANCINGDIVIDOR          10
 
 typedef struct kInterruptManagerStruct
 {
     QWORD vvqwCoreInterruptCount[MAXPROCESSORCOUNT][INTERRUPT_MAXVECTORCOUNT];
-
     BOOL bUseLoadBalancing;
-
     BOOL bSymmetricIOMode;
 }INTERRUPTMANAGER;
 
@@ -22,6 +20,7 @@ void kIncreaseInterruptCount(int iIRQ);
 void kSendEOI(int iIRQ);
 INTERRUPTMANAGER* kGetInterruptManager(void);
 void kProcessLoadBalancing(int iIRQ);
+
 
 void kCommonExceptionHandler(int iVectorNumber, QWORD qwErrorCode);
 void kCommonInterruptHandlr(int iVectorNumber);
