@@ -35,6 +35,27 @@ kOutPortByte:
     pop rdx
     ret
 
+kInPortWord:
+    push rdx
+
+    mov rdx, rdi
+    mov rax, 0
+    in ax, dx
+
+    pop rdx
+    ret
+
+kOutPortWord:
+    push rdx
+    push rax
+
+    mov rdx, rdi
+    mov rax, rsi
+    out dx, ax
+
+    pop rax
+    pop rdx
+    ret
 
 kLoadGDTR:
     lgdt [rdi];
@@ -166,7 +187,8 @@ kSwitchContext:
 
     KSAVECONTEXT
 
-.LoadContext
+
+.LoadContext:
     mov rsp, rsi
 
     KLOADCONTEXT
@@ -187,6 +209,7 @@ kTestAndSet:
 
 .NOTSAME:
     mov rax, 0x00
+    ret
 
 .SUCCESS:
     mov rax, 0x01
@@ -217,28 +240,6 @@ kSetTS:
 
 kClearTS:
     clts
-    ret
-
-kInPortWord:
-    push rdx
-
-    mov rdx, rdi
-    mov rax, 0
-    in ax, dx
-
-    pop rdx
-    ret
-
-kOutPortWord:
-    push rdx
-    push rax
-
-    mov rdx, rdi
-    mov rax, rsi
-    out dx, ax
-
-    pop rax
-    pop rdx
     ret
 
 kEnableGlobalLocalAPIC:
