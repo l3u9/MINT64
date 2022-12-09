@@ -70,7 +70,7 @@ void kProcessLoadBalancing(int iIRQ)
         if((gs_stInterruptManager.vvqwCoreInterruptCount[i][iIRQ] < qwMinCount))
         {
             qwMinCount = gs_stInterruptManager.vvqwCoreInterruptCount[i][iIRQ];
-            iMinCountCoreIndex = 1;
+            iMinCountCoreIndex = i;
         }
         else if(gs_stInterruptManager.vvqwCoreInterruptCount[i][iIRQ] >= 0xfffffffffffffffe)
             bResetCount = TRUE;

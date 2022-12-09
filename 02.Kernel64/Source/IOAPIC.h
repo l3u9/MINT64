@@ -69,7 +69,6 @@ void kReadIOAPICRedirectionTable(int iINTIN, IOREDIRECTIONTABLE* pstEntry);
 void kWriteIOAPICRedirectionTable(int iINTIN, IOREDIRECTIONTABLE* pstEntry);
 void kMaskAllInterruptInIOAPIC(void);
 void kPrintIRQToINTINMap(void);
-void kRoutingIRQToAPICID(int iIRQ, BYTE bAPICID);
 
 
 #endif
