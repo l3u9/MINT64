@@ -418,3 +418,21 @@ void kSleep(QWORD qwMillisecond)
     while((g_qwTickCount - qwLastTickCount) <= qwMillisecond)
         kSchedule();
 }
+
+void kMemSetWord(void* pvDestination, WORD wData, int iWordSize)
+{
+    int i;
+    QWORD qwData;
+    int iRemainWordStartOffset;
+
+    qwData = 0;
+    for(i = 0; i < 4; i++)
+        qwData = (qwData << 16) | wData;
+
+    for(i = 0; i < (iWordSize / 4); i++)
+        ((QWORD*)pvDestination)[i] = qwData;
+    
+    iRemainWordStartOffset = i * 4;
+    for(i = 0; i < (iWordSize % 4); i++)
+        ((WORD*)pvDestination)[iRemainWordStartOffset++] = wData;
+}
