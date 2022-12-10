@@ -155,7 +155,7 @@ READEND:
     ;;VBE 기능 번 0x4f01을 호출하여 그래픽 모드에 대한 모드 정보 블록을 구함
     mov ax, 0x4f01
     mov cx, 0x117 ;1024 768 해상도에 16비트 색 모드 지정
-    mov bx, 0x70e
+    mov bx, 0x7e0
     mov es, bx
     mov di, 0x00
     int 0x10
