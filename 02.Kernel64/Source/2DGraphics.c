@@ -3,24 +3,121 @@
 #include "Font.h"
 #include "Utility.h"
 
-
-void kDrawPixel(int iX, int iY, COLOR stColor)
+BOOL kIsInRectangle(const RECT* pstArea, int iX, int iY)
 {
-    VBEMODEINFOBLOCK* pstModeInfo;
-
-    pstModeInfo = kGetVBEModeInfoBlock();
-
-    *(((COLOR*)(QWORD)pstModeInfo->dwPhysicalBasePointer) + pstModeInfo->wXResolution * iY + iX) = stColor;
-
+    if((iX < pstArea->iX1) || (pstArea->iX2 < iX) || (iY < pstArea->iY1) || (pstArea->iY2 < iY))
+        return FALSE;
+    return TRUE;
 }
 
-void kDrawLine(int iX1, int iY1, int iX2, int iY2, COLOR stColor)
+int kGetRectangleWidth(const RECT* pstArea)
+{
+    int iWidth;
+    iWidth = pstArea->iX2 - pstArea->iX1 + 1;
+
+    if(iWidth < 0)
+        return -iWidth;
+    return iWidth;
+}
+
+int kGetRectangleHeight(const RECT* pstArea)
+{
+    int iHeight;
+
+    iHeight = pstArea->iY2 - pstArea->iY1 + 1;
+    
+    if(iHeight < 0)
+        return -iHeight;
+    return iHeight;
+}
+
+BOOL kIsRectangleOverlapped(const RECT* pstArea1, const RECT* pstArea2)
+{
+    if((pstArea1->iX1 > pstArea2->iX2) || (pstArea1->iX2 < pstArea2->iX1) || 
+    (pstArea1->iY1 > pstArea2->iY2) || (pstArea1->iY2 < pstArea2->iY1))
+        return FALSE;
+
+    return TRUE;
+}
+
+BOOL kGetOverlappedRectangle(const RECT* pstArea1, const RECT* pstArea2, RECT* pstIntersection)
+{
+    int iMaxX1;
+    int iMinX2;
+    int iMaxY1;
+    int iMinY2;
+
+    iMaxX1 = MAX(pstArea1->iX1, pstArea2->iX1);
+    
+    iMinX2 = MIN(pstArea1->iX2, pstArea2->iX2);
+
+    if(iMinX2 < iMaxX1)
+        return FALSE;
+    
+    iMaxY1 = MAX(pstArea1->iY1, pstArea2->iY1);
+
+    iMinY2 = MIN(pstArea1->iY2, pstArea2->iY2);
+
+    if(iMinY2 < iMaxY1)
+        return FALSE;
+    
+    pstIntersection->iX1 = iMaxX1;
+    pstIntersection->iY1 = iMaxY1;
+    pstIntersection->iX2 = iMinX2;
+    pstIntersection->iY2 = iMinY2;
+
+    return TRUE;    
+}
+
+void kSetRectangleData(int iX1, int iY1, int iX2, int iY2, RECT* pstRect)
+{
+    if(iX1 < iX2)
+    {
+        pstRect->iX1 = iX1;
+        pstRect->iX2 = iX2;
+    }
+    else
+    {
+        pstRect->iX1 = iX2;
+        pstRect->iX2 = iX1;
+    }
+
+    if(iY1 < iY2)
+    {
+        pstRect->iY1 = iY1;
+        pstRect->iY2 = iY2;
+    }
+    else
+    {
+        pstRect->iY1 = iY2;
+        pstRect->iY2 = iY1;
+    }
+}
+
+void kInternalDrawPixel(const RECT* pstMemoryArea, COLOR* pstMemoryAddress, int iX, int iY, COLOR stColor)
+{
+    int iWidth;
+
+    if(kIsInRectangle(pstMemoryArea, iX, iY) == FALSE)
+        return;
+    
+    iWidth = kGetRectangleWidth(pstMemoryArea);
+
+    *(pstMemoryAddress + (iWidth * iY) + iX) = stColor;
+}
+
+void kInternalDrawLine(const RECT* pstMemoryArea, COLOR* pstMemoryAddress, int iX1, int iY1, int iX2, int iY2, COLOR stColor)
 {
     int iDeltaX, iDeltaY;
     int iError = 0;
     int iDeltaError;
     int iX, iY;
     int iStepX, iStepY;
+    RECT stLineArea;
+
+    kSetRectangleData(iX1, iY1, iX2, iY2, &stLineArea);
+    if(kIsRectangleOverlapped(pstMemoryArea, &stLineArea) == FALSE)
+        return ;
 
     iDeltaX = iX2 - iX1;
     iDeltaY = iY2 - iY1;
@@ -47,7 +144,7 @@ void kDrawLine(int iX1, int iY1, int iX2, int iY2, COLOR stColor)
         iY = iY1;
         for(iX = iX1; iX != iX2; iX += iStepX)
         {
-            kDrawPixel(iX, iY, stColor);
+            kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, iX, iY, stColor);
             iError += iDeltaError;
 
             if(iError >= iDeltaX)
@@ -56,7 +153,7 @@ void kDrawLine(int iX1, int iY1, int iX2, int iY2, COLOR stColor)
                 iError -= iDeltaX << 1;
             }
         }
-        kDrawPixel(iX, iY, stColor);
+        kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, iX, iY, stColor);
     }
     else
     {
@@ -64,7 +161,7 @@ void kDrawLine(int iX1, int iY1, int iX2, int iY2, COLOR stColor)
         iX = iX1;
         for(iY = iY1; iY != iY2; iY += iStepY)
         {
-            kDrawPixel(iX, iY, stColor);
+            kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, iX, iY, stColor);
             iError += iDeltaError;
             if(iError >= iDeltaY)
             {
@@ -72,65 +169,54 @@ void kDrawLine(int iX1, int iY1, int iX2, int iY2, COLOR stColor)
                 iError -= iDeltaY << 1;
             }
         }
-        kDrawPixel(iX, iY, stColor);
+        kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, iX, iY, stColor);
     }
+
 }
 
-void kDrawRect(int iX1, int iY1, int iX2, int iY2, COLOR stColor, BOOL bFill)
+void kInternalDrawRect(const RECT* pstMemoryArea, COLOR* pstMemoryAddress, int iX1, int iY1, int iX2, int iY2, COLOR stColor, BOOL bFill)
 {
-    int iWidth;
-    int iTemp;
-    int iY;
-    int iStepY;
-    COLOR* pstVideoMemoryAddress;
-    VBEMODEINFOBLOCK* pstModeInfo;
+        int iWidth;
+        int iTemp;
+        int iY;
+        int iStepY;
+        int iMemoryAreaWidth;
+        RECT stDrawRect;
+        RECT stOverlappedArea;
 
     if(bFill == FALSE)
     {
-        kDrawLine(iX1, iY1, iX2, iY1, stColor);
-        kDrawLine(iX1, iY1, iX1, iY2, stColor);
-        kDrawLine(iX2, iY1, iX2, iY2, stColor);
-        kDrawLine(iX1, iY2, iX2, iY2, stColor);
+        kInternalDrawLine(pstMemoryArea, pstMemoryAddress, iX1, iY1, iX2, iY1, stColor);
+        kInternalDrawLine(pstMemoryArea, pstMemoryAddress, iX1, iY1, iX1, iY2, stColor);
+        kInternalDrawLine(pstMemoryArea, pstMemoryAddress, iX2, iY1, iX2, iY2, stColor);
+        kInternalDrawLine(pstMemoryArea, pstMemoryAddress, iX1, iY2, iX2, iY2, stColor);
     }
     else
     {
-        pstModeInfo = kGetVBEModeInfoBlock();
-        pstVideoMemoryAddress = (COLOR*)((QWORD)pstModeInfo->dwPhysicalBasePointer);
+        kSetRectangleData(iX1, iY1, iX2, iY2, &stDrawRect);
 
-        if(iX2 < iX1)
+        if(kGetOverlappedRectangle(pstMemoryArea, &stDrawRect, &stOverlappedArea) == FALSE)
+            return ;
+        
+        iWidth = kGetRectangleWidth(&stOverlappedArea);
+
+        iMemoryAreaWidth = kGetRectangleWidth(pstMemoryArea);
+
+        pstMemoryAddress += stOverlappedArea.iY1 * iMemoryAreaWidth + stOverlappedArea.iX1;
+
+        for(iY = stOverlappedArea.iY1; iY < stOverlappedArea.iY2; iY++)
         {
-            iTemp = iX1;
-            iX1 = iX2;
-            iX2 = iTemp;
+            kMemSetWord(pstMemoryAddress, stColor, iWidth);
 
-            iTemp = iY1;
-            iY1 = iY2;
-            iY2 = iTemp;
+            pstMemoryAddress += iMemoryAreaWidth;
         }
 
-        iWidth = iX2 -iX1 + 1;
-
-        if(iY1 <= iY2)
-            iStepY = 1;
-        else
-            iStepY = -1;
-
-        pstVideoMemoryAddress += iY1 * pstModeInfo->wXResolution + iX1;
-
-        for(iY = iY1; iY != iY2; iY += iStepY)
-        {
-            kMemSetWord(pstVideoMemoryAddress, stColor, iWidth);
-
-            if(iStepY >= 0)
-                pstVideoMemoryAddress += pstModeInfo->wXResolution;
-            else
-                pstVideoMemoryAddress -= pstModeInfo->wXResolution;
-        }
-        kMemSetWord(pstVideoMemoryAddress, stColor, iWidth);
+        kMemSetWord(pstMemoryAddress, stColor, iWidth);
     }
 }
 
-void kDrawCircle(int iX, int iY, int iRadius, COLOR stColor, BOOL bFill)
+
+void kInternalDrawCircle(const RECT* pstMemoryArea, COLOR* pstMemoryAddress, int iX, int iY, int iRadius, COLOR stColor, BOOL bFill)
 {
     int iCircleX, iCircleY;
     int iDistance;
@@ -142,15 +228,16 @@ void kDrawCircle(int iX, int iY, int iRadius, COLOR stColor, BOOL bFill)
 
     if(bFill == FALSE)
     {
-        kDrawPixel(0 + iX, iRadius + iY, stColor);
-        kDrawPixel(0 + iX, -iRadius + iY, stColor);
-        kDrawPixel(iRadius + iX, 0 + iY, stColor);
-        kDrawPixel(-iRadius + iX, 0 + iY, stColor);
+        kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, 0 + iX, iRadius + iY, stColor);
+        kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, 0 + iX, -iRadius + iY, stColor);
+        kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, iRadius + iX, 0 + iY, stColor);
+        kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, -iRadius + iX, 0 + iY, stColor);
+    
     }
     else
     {
-        kDrawLine(0 + iX, iRadius + iY, 0 + iX, -iRadius + iY, stColor);
-        kDrawLine(iRadius + iX, 0 + iY, -iRadius + iX, 0 + iY, stColor);
+        kInternalDrawLine(pstMemoryArea, pstMemoryAddress, 0 + iX, iRadius + iY, 0 + iX, -iRadius + iY, stColor);
+        kInternalDrawLine(pstMemoryArea, pstMemoryAddress, iRadius + iX, 0 + iY, -iRadius + iX, 0 + iY, stColor);
     }
 
     iDistance = -iRadius;
@@ -167,59 +254,82 @@ void kDrawCircle(int iX, int iY, int iRadius, COLOR stColor, BOOL bFill)
 
         if(bFill == FALSE)
         {
-            kDrawPixel(iCircleX + iX, iCircleY + iY, stColor);
-            kDrawPixel(iCircleX + iX, -iCircleY + iY, stColor);
-            kDrawPixel(-iCircleX + iX, iCircleY + iY, stColor);
-            kDrawPixel(-iCircleX + iX, -iCircleY + iY, stColor);
-            kDrawPixel(iCircleY + iX, iCircleX + iY, stColor);
-            kDrawPixel(iCircleY + iX, -iCircleX + iY, stColor);
-            kDrawPixel(-iCircleY + iX, iCircleX + iY, stColor);
-            kDrawPixel(-iCircleY + iX, -iCircleX + iY, stColor);
+            kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, iCircleX + iX, iCircleY + iY, stColor);
+            kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, iCircleX + iX, -iCircleY + iY, stColor);
+            kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, -iCircleX + iX, iCircleY + iY, stColor);
+            kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, -iCircleX + iX, -iCircleY + iY, stColor);
+            kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, iCircleY + iX, iCircleX + iY, stColor);
+            kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, iCircleY + iX, -iCircleX + iY, stColor);
+            kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, -iCircleY + iX, iCircleX + iY, stColor);
+            kInternalDrawPixel(pstMemoryArea, pstMemoryAddress, -iCircleY + iX, -iCircleX + iY, stColor);
         }
         else
         {
-            kDrawRect(-iCircleX + iX, iCircleY + iY, iCircleX + iX, iCircleY + iY, stColor, TRUE);
-            kDrawRect(-iCircleX + iX, -iCircleY + iY, iCircleX + iX, -iCircleY + iY, stColor, TRUE);
-            kDrawRect(-iCircleY + iX, iCircleX + iY, iCircleY + iX, iCircleX + iY, stColor, TRUE);
-            kDrawRect(-iCircleY + iX, -iCircleX + iY, iCircleY + iX, iCircleX + iY, stColor, TRUE);
+            kInternalDrawRect(pstMemoryArea, pstMemoryAddress, -iCircleX + iX, iCircleY + iY, iCircleX + iX, iCircleY + iY, stColor, TRUE);
+            kInternalDrawRect(pstMemoryArea, pstMemoryAddress, -iCircleX + iX, -iCircleY + iY, iCircleX + iX, -iCircleY + iY, stColor, TRUE);
+            kInternalDrawRect(pstMemoryArea, pstMemoryAddress, -iCircleY + iX, iCircleX + iY, iCircleY + iX, iCircleX + iY, stColor, TRUE);
+            kInternalDrawRect(pstMemoryArea, pstMemoryAddress, -iCircleY + iX, -iCircleX + iY, iCircleY + iX, -iCircleX + iY, stColor, TRUE);
         }
     }
 }
 
-void kDrawText(int iX, int iY, COLOR stTextColor, COLOR stBackgroundColor, const char* pcString, int iLength)
+void kInternalDrawText(const RECT* pstMemoryArea, COLOR* pstMemoryAddress, int iX, int iY, COLOR stTextColor, COLOR stBackgroundColor, const char* pcString, int iLength)
 {
     int iCurrentX, iCurrentY;
     int i, j, k;
-    BYTE bBitmask;
-    int iBitmaskStartIndex;
-    VBEMODEINFOBLOCK* pstModeInfo;
-    COLOR* pstVideoMemoryAddress;
-
-    pstModeInfo = kGetVBEModeInfoBlock();
-
-    pstVideoMemoryAddress = (COLOR*)((QWORD) pstModeInfo->dwPhysicalBasePointer);
+    BYTE bBitmap;
+    BYTE bCurrentBitmask;
+    int iBitmapStartIndex;
+    int iMemoryAreaWidth;
+    RECT stFontArea;
+    RECT stOverlappedArea;
+    int iStartYOffset;
+    int iStartXOffset;
+    int iOverlappedWidth;
+    int iOverlappedHeight;
 
     iCurrentX = iX;
 
+    iMemoryAreaWidth = kGetRectangleWidth(pstMemoryArea);
+
     for(k = 0; k < iLength; k++)
     {
-        iCurrentY = iY * pstModeInfo->wXResolution;
+        iCurrentY = iY * iMemoryAreaWidth;
 
-        iBitmaskStartIndex = pcString[k] * FONT_ENGLISHHEIGHT;
+        kSetRectangleData(iCurrentX, iY, iCurrentX + FONT_ENGLISHWIDTH - 1, iY + FONT_ENGLISHHEIGHT - 1, &stFontArea);
 
-        for(j = 0; j < FONT_ENGLISHHEIGHT; j++)
+        if(kGetOverlappedRectangle(pstMemoryArea, &stFontArea, &stOverlappedArea) == FALSE)
         {
-            bBitmask = g_vucEnglishFont[iBitmaskStartIndex++];
+            iCurrentX += FONT_ENGLISHWIDTH;
+            continue;
+        }
 
-            for(i = 0; i < FONT_ENGLISHWIDTH; i++)
+        iBitmapStartIndex = pcString[k] * FONT_ENGLISHHEIGHT;
+
+        iStartXOffset = stOverlappedArea.iX1 - iCurrentX;
+        iStartYOffset = stOverlappedArea.iY1 - iY;
+        iOverlappedWidth = kGetRectangleWidth(&stOverlappedArea);
+        iOverlappedHeight = kGetRectangleHeight(&stOverlappedArea);
+
+        iBitmapStartIndex += iStartYOffset;
+
+        for(j = iStartYOffset; j < iOverlappedHeight; j++)
+        {
+            bBitmap = g_vucEnglishFont[iBitmapStartIndex++];
+            bCurrentBitmask = 0x01 << (FONT_ENGLISHWIDTH - 1 - iStartXOffset);
+
+            for(i = iStartXOffset; i < iOverlappedWidth; i++)
             {
-                if(bBitmask & (0x01 << (FONT_ENGLISHWIDTH - i - 1)))
-                    pstVideoMemoryAddress[iCurrentY + iCurrentX + i] = stTextColor;
+                if(bBitmap & bCurrentBitmask)
+                    pstMemoryAddress[iCurrentY + iCurrentX + i] = stTextColor;
                 else
-                    pstVideoMemoryAddress[iCurrentY + iCurrentX + i] = stBackgroundColor;
+                    pstMemoryAddress[iCurrentY + iCurrentX + i] = stBackgroundColor;
+
+                bCurrentBitmask = bCurrentBitmask >> 1;
             }
-            iCurrentY += pstModeInfo->wXResolution;
+            iCurrentY += iMemoryAreaWidth;
         }
         iCurrentX += FONT_ENGLISHWIDTH;
     }
+
 }
