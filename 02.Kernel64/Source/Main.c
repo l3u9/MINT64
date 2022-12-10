@@ -12,9 +12,10 @@
 #include "FileSystem.h"
 #include "SerialPort.h"
 #include "MultiProcessor.h"
+#include "VBE.h"
 
 void MainForApplicationProcessor(void);
-
+void kStartGraphicModeTest();
 
 void Main(void)
 {
@@ -105,7 +106,11 @@ void Main(void)
     
     // 유휴 태스크를 시스템 스레드로 생성하고 쉘을 시작
     kCreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_THREAD | TASK_FLAGS_SYSTEM, 0, 0, (QWORD)kIdleTask, kGetAPICID());
-    kStartConsoleShell();
+
+    if(*(BYTE*)VBE_STARTGRAPHICMODEFLAGADDRESS == 0)
+        kStartConsoleShell();
+    else
+        kStartGraphicModeTest();
 }
 
 void MainForApplicationProcessor(void)
@@ -133,4 +138,37 @@ void MainForApplicationProcessor(void)
     
     kIdleTask();
     
+}
+
+void kStartGraphicModeTest()
+{
+    VBEMODEINFOBLOCK* pstVBEMode;
+    WORD* pwFrameBufferAddress;
+    WORD wColor = 0;
+    int iBandHeight;
+    int i;
+    int j;
+
+    kGetCh();
+    
+    pstVBEMode = kGetVBEModeInfoBlock();
+    pwFrameBufferAddress = (WORD*)((QWORD) pstVBEMode->dwPhysicalBasePointer);
+
+    iBandHeight = pstVBEMode->wYResolution / 32;
+
+    while(1)
+    {
+        for(j = 0; j < pstVBEMode->wYResolution; j++)
+        {
+            for(i = 0; i < pstVBEMode->wXResolution; i++)
+            {
+                pwFrameBufferAddress[(j * pstVBEMode->wXResolution) + i] = wColor;
+            }
+
+            if((j % iBandHeight) == 0)
+                wColor = kRandom() & 0xffff;
+        }
+        kGetCh();
+    }
+
 }

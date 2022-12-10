@@ -15,6 +15,8 @@ KERNEL32SECTORCOUNT: dw 0x02 ;보호 모드 커널의 총 섹터 수
 
 BOOTSTARTPROCESSOR: db 0x01
 
+STARTGRAPHICMODE:   db 0x01
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; CODE SECTION
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -150,6 +152,37 @@ READEND:
     call PRINTMESSAGE
     add sp, 6
 
+    ;;VBE 기능 번 0x4f01을 호출하여 그래픽 모드에 대한 모드 정보 블록을 구함
+    mov ax, 0x4f01
+    mov cx, 0x117 ;1024 768 해상도에 16비트 색 모드 지정
+    mov bx, 0x70e
+    mov es, bx
+    mov di, 0x00
+    int 0x10
+    cmp ax, 0x4f
+    jne VBEERROR
+
+    ;;VBE 기능번호 0x4f02를 호출하여 그래픽 모드로 전환
+    cmp byte[STARTGRAPHICMODE], 0x00
+    je JUMPTOPROTECTEDMODE
+
+    mov ax, 0x4f02
+    mov bx, 0x4117
+    int 0x10
+    cmp ax, 0x4f
+    jne VBEERROR
+
+    jmp JUMPTOPROTECTEDMODE
+    
+VBEERROR:
+    push CHANGEGRAPHICMODEFAIL
+    push 2
+    push 0
+    call PRINTMESSAGE
+    add sp, 6
+    jmp $
+
+JUMPTOPROTECTEDMODE:
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ; execute Virtual OS image to load
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -245,6 +278,7 @@ MESSAGE1:
 DISKERRORMESSAGE:   db 'Disk Error~!!', 0
 IMAGELOADINGMESSAGE: db 'OS Image Loading...', 0
 LOADINGCOMPLETEMESSAGE: db 'Complete~!!', 0
+CHANGEGRAPHICMODEFAIL: db 'Change Graphic Mode Fail~!!', 0
 
 ;related value to read Disk
 SECTORNUMBER: db 0x02   ;Section that save Sector number to start OS Image

@@ -82,5 +82,6 @@ static void kShowInterruptProcessingCount(const char* pcParameterBuffer);
 static void kStartInterruptLoadBalancing(const char* pcParameterBuffer);
 static void kStartTaskLoadBalancing(const char* pcParameterBuffer);
 static void kChangeTaskAffinity(const char* pcParameterBuffer);
+static void kShowVBEModeInfo(const char* pcParameterBuffer);
 
 #endif
