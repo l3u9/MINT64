@@ -25,10 +25,17 @@ void kInitializeMutex(MUTEX* pstMutex)
 
 void kLock(MUTEX* pstMutex)
 {
+    BYTE bCurrentAPICID;
+    BOOL bInterruptFlag;
+
+    bInterruptFlag = kSetInterruptFlag(FALSE);
+    bCurrentAPICID = kGetAPICID();
+
     if(kTestAndSet(&(pstMutex->bLockFlag), 0, 1) == FALSE)
     {
-        if(pstMutex->qwTaskID == kGetRunningTask()->stLink.qwID)
+        if(pstMutex->qwTaskID == kGetRunningTask(bCurrentAPICID)->stLink.qwID)
         {
+            kSetInterruptFlag(bInterruptFlag);
             pstMutex->dwLockCount++;
             return;
         }
@@ -39,25 +46,36 @@ void kLock(MUTEX* pstMutex)
         }
     }
     pstMutex->dwLockCount = 1;
-    pstMutex->qwTaskID = kGetRunningTask()->stLink.qwID;
+    pstMutex->qwTaskID = kGetRunningTask(bCurrentAPICID)->stLink.qwID;
+    kSetInterruptFlag(bInterruptFlag);
 }
 
 void kUnlock(MUTEX* pstMutex)
 {
-    if((pstMutex->bLockFlag == FALSE) || (pstMutex->qwTaskID != kGetRunningTask()->stLink.qwID))
+    BOOL bInterruptFlag;
+
+    bInterruptFlag = kSetInterruptFlag(FALSE);
+
+
+    if((pstMutex->bLockFlag == FALSE) || (pstMutex->qwTaskID != kGetRunningTask(kGetAPICID())->stLink.qwID))
     {
+        kSetInterruptFlag(bInterruptFlag);
         return;
     }
 
     if(pstMutex->dwLockCount > 1)
     {
         pstMutex->dwLockCount--;
-        return;
+    }
+    else
+    {
+        pstMutex->qwTaskID = TASK_INVALIDID;
+        pstMutex->dwLockCount = 0;
+        pstMutex->bLockFlag = FALSE;
     }
 
-    pstMutex->qwTaskID = TASK_INVALIDID;
-    pstMutex->dwLockCount = 0;
-    pstMutex->bLockFlag = FALSE;
+    kSetInterruptFlag(bInterruptFlag);
+
 }
 
 void kInitializeSpinLock(SPINLOCK* pstSpinLock)

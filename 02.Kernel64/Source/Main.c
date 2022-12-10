@@ -104,7 +104,7 @@ void Main(void)
     kInitializeSerialPort();
     
     // 유휴 태스크를 시스템 스레드로 생성하고 쉘을 시작
-    kCreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_THREAD | TASK_FLAGS_SYSTEM, 0, 0, (QWORD)kIdleTask);
+    kCreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_THREAD | TASK_FLAGS_SYSTEM, 0, 0, (QWORD)kIdleTask, kGetAPICID());
     kStartConsoleShell();
 }
 
@@ -117,6 +117,8 @@ void MainForApplicationProcessor(void)
     kLoadTR(GDT_TSSSEGMENT + (kGetAPICID() * sizeof(GDTENTRY16)));
 
     kLoadIDTR(IDTR_STARTADDRESS);
+
+    kInitializeScheduler();
     
     kEnableSoftwareLocalAPIC();
 
@@ -125,20 +127,10 @@ void MainForApplicationProcessor(void)
     kInitializeLocalVectorTable();
 
     kEnableInterrupt();    
-
-    kPrintf("Application Processor[APIC ID: %d] Is Activated\n",
+    
+    kPrintf("Application Processor[APIC ID: %d] Is Activated\n\n",
             kGetAPICID());
     
-    qwTickCount = kGetTickCount();
+    kIdleTask();
     
-    while(1)
-    {
-        if(kGetTickCount() - qwTickCount > 1000)
-        {
-            qwTickCount = kGetTickCount();
-            
-            // kPrintf("Application Processor[APIC ID: %d] Is Activated\n",
-            //        kGetAPICID());
-        }
-    }
 }
