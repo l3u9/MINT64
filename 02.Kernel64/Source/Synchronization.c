@@ -102,7 +102,7 @@ void kLockForSpinLock(SPINLOCK* pstSpinLock)
 
         while(kTestAndSet(&(pstSpinLock->bLockFlag), 0, 1) == FALSE)
         {
-            while(pstSpinLock->bLockFlag == FALSE)
+            while(pstSpinLock->bLockFlag == TRUE)
                 kPause();
         }
     }

@@ -514,7 +514,7 @@ static void kTestTask3(void)
             bLastLocalAPICID = kGetAPICID();
         }
 
-        kSchedule();
+        // kSchedule();
     }
 
 }
@@ -627,6 +627,7 @@ static void kShowTaskList(const char* pcParameterBuffer)
         {
             if((i != 0) && ((i % 4) == 0))
                 kPrintf("\n");
+
             kSPrintf(vcBuffer, "Core %d : %d", i, kGetTaskCount(i));
             kPrintf(vcBuffer);
             iRemainLength = 19 - kStrLen(vcBuffer);
@@ -634,6 +635,9 @@ static void kShowTaskList(const char* pcParameterBuffer)
             vcBuffer[iRemainLength] = '\0';
             kPrintf(vcBuffer);
         }
+        
+        kPrintf( "\nPress any key to continue... ('q' is exit) : " );
+
         if(kGetCh() == 'q')
         {
             kPrintf("\n");
