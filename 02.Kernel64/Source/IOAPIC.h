@@ -63,12 +63,12 @@ typedef struct kIOAPICManagerStruct
     BYTE vbIRQToINTINMap[IOAPIC_MAXIRQTOINTINMAPCOUNT];
 }IOAPICMANAGER;
 
+void kInitializeIORedirectionTable(void);
 QWORD kGetIOAPICBaseAddressOfISA(void);
 void kSetIOAPICRedirectionEntry(IOREDIRECTIONTABLE* pstEntry, BYTE bAPICID, BYTE bInterruptMask, BYTE bFlagsAndDeliveryMode, BYTE bVector);
 void kReadIOAPICRedirectionTable(int iINTIN, IOREDIRECTIONTABLE* pstEntry);
 void kWriteIOAPICRedirectionTable(int iINTIN, IOREDIRECTIONTABLE* pstEntry);
 void kMaskAllInterruptInIOAPIC(void);
 void kPrintIRQToINTINMap(void);
-
 
 #endif

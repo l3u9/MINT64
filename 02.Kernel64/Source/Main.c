@@ -1,4 +1,5 @@
-
+#include "AssemblyUtility.h"
+#include "InterruptHandler.h"
 #include "Types.h"
 #include "Keyboard.h"
 #include "Descriptor.h"
@@ -12,15 +13,54 @@
 #include "FileSystem.h"
 #include "SerialPort.h"
 #include "MultiProcessor.h"
+#include "IOAPIC.h"
 #include "VBE.h"
 #include "2DGraphics.h"
+#include "MPConfigurationTable.h"
+#include "Mouse.h"
+
+
+#define MOUSE_CURSOR_WIDTH              20
+#define MOUSE_CURSOR_HEIGHT             20
+#define MOUSE_CURSOR_OUTERLINE          RGB(0, 0, 0)
+#define MOUSE_CURSOR_OUTER              RGB(79, 204, 11)
+#define MOUSE_CURSOR_INNER              RGB(232, 255, 232)
+
+BYTE gs_vwMouseBuffer[MOUSE_CURSOR_WIDTH * MOUSE_CURSOR_HEIGHT] = {
+    1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 2, 2, 3, 3, 3, 3, 2, 2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0,
+    0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1,
+    0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 1, 1,
+    0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 1, 1, 0, 0,
+    0, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0,
+    0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 2, 1, 1, 0, 0, 0, 0, 0, 0,
+    0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 2, 1, 0, 0, 0, 0, 0, 0,
+    0, 0, 1, 2, 2, 3, 3, 3, 2, 2, 3, 3, 3, 2, 1, 0, 0, 0, 0, 0,
+    0, 0, 0, 1, 2, 3, 3, 2, 1, 1, 2, 3, 2, 2, 2, 1, 0, 0, 0, 0,
+    0, 0, 0, 1, 2, 3, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 1, 0, 0, 0,
+    0, 0, 0, 1, 2, 3, 2, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 1, 0, 0,
+    0, 0, 0, 1, 2, 2, 2, 1, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 1, 0,
+    0, 0, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 1,
+    0, 0, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 1, 0,
+    0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 0,
+    0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+};
 
 void MainForApplicationProcessor(void);
+BOOL kChangeToMultiCoreMode(void);
 void kStartGraphicModeTest();
+
 
 void Main(void)
 {
     int iCursorX, iCursorY;
+    BYTE bButton;
+    int iX;
+    int iY;
+
 
     if(*((BYTE*) BOOTSTRAPPROCESSOR_FLAGADDRESS) == 0)
         MainForApplicationProcessor();
@@ -80,6 +120,20 @@ void Main(void)
         while(1) ;
     }
 
+    kPrintf("Mouse Activate And Queue Initialize.........[    ]");
+    if(kInitializeMouse() == TRUE)
+    {
+        kEnableMouseInterrupt();
+        kSetCursor(45, iCursorY++);
+        kPrintf("Pass\n");
+    }
+    else
+    {
+        kSetCursor(45, iCursorY++);
+        kPrintf("Fail\n");
+        while(1);
+    }
+
     kPrintf("PIC Controller And Interrupt Initialize.....[    ]");
     // PIC 컨트롤러 초기화 및 모든 인터럽 활성화
     kInitializePIC();
@@ -104,6 +158,18 @@ void Main(void)
     kPrintf("Serial Port Initialize......................[Pass]\n");
     iCursorY++;
     kInitializeSerialPort();
+
+    kPrintf("Change To MultiCore Processor Mode..........[    ]");
+    if(kChangeToMultiCoreMode() == TRUE)
+    {
+        kSetCursor(45, iCursorY++);
+        kPrintf("Pass\n");
+    }
+    else
+    {
+        kSetCursor(45, iCursorY++);
+        kPrintf("Fail\n");
+    }
     
     // 유휴 태스크를 시스템 스레드로 생성하고 쉘을 시작
     kCreateTask(TASK_FLAGS_LOWEST | TASK_FLAGS_THREAD | TASK_FLAGS_SYSTEM, 0, 0, (QWORD)kIdleTask, kGetAPICID());
@@ -134,11 +200,54 @@ void MainForApplicationProcessor(void)
 
     kEnableInterrupt();    
     
-    kPrintf("Application Processor[APIC ID: %d] Is Activated\n\n",
-            kGetAPICID());
+//     kPrintf("Application Processor[APIC ID: %d] Is Activated\n\n",
+//             kGetAPICID());
     
     kIdleTask();
     
+}
+
+BOOL kChangeToMultiCoreMode(void)
+{
+        MPCONFIGURATIONMANAGER* pstMPManager;
+        BOOL bInterruptFlag;
+        int i;
+
+        if(kStartUpApplicationProcessor() == FALSE)
+                return FALSE;
+        
+        pstMPManager = kGetMPConfigurationManager();
+        if(pstMPManager->bUsePICMode == TRUE)
+        {
+                kOutPortByte(0x22, 0x70);
+                kOutPortByte(0x23, 0x01);
+        }
+        kMaskPICInterrupt(0xffff);
+
+        kEnableGlobalLocalAPIC();
+
+        kEnableSoftwareLocalAPIC();
+
+        bInterruptFlag = kSetInterruptFlag(FALSE);
+
+        kSetTaskPriority(0);
+
+        kInitializeLocalVectorTable();
+
+        kSetSymmetricIOMode(TRUE);
+        
+        kInitializeIORedirectionTable();
+
+        kSetInterruptFlag(bInterruptFlag);
+        
+        kSetInterruptLoadBalancing(TRUE);
+
+        for(i = 0; i < MAXPROCESSORCOUNT; i++)
+                kSetTaskLoadBalancing(i, TRUE);
+
+        return TRUE;
+
+        
 }
 
 #define ABS(x)      (((x) >= 0) ? (x) : -(x))
@@ -290,139 +399,93 @@ void kDrawWindowFrame( int iX, int iY, int iWidth, int iHeight, const char* pcTi
 }
 
 
+void kDrawCursor(RECT* pstArea, COLOR* pstVideoMemory, int iX, int iY)
+{
+	int i, j;
+	BYTE* pbCurrentPos;
+
+	pbCurrentPos = gs_vwMouseBuffer;
+
+	for(j = 0; j < MOUSE_CURSOR_HEIGHT; j++)
+	{
+		for(i = 0; i < MOUSE_CURSOR_WIDTH; i++)
+		{
+			switch(*pbCurrentPos)
+			{
+				case 0:
+					break;
+				case 1:
+					kInternalDrawPixel(pstArea, pstVideoMemory, i+ iX , j + iY, MOUSE_CURSOR_OUTERLINE);
+					break;
+				case 2:
+					kInternalDrawPixel(pstArea, pstVideoMemory, i+ iX , j + iY, MOUSE_CURSOR_OUTER);
+					break;
+				case 3:
+					kInternalDrawPixel(pstArea, pstVideoMemory, i+ iX , j + iY, MOUSE_CURSOR_INNER);
+					break;
+			}
+			pbCurrentPos++;
+		}
+	}
+}
+
 void kStartGraphicModeTest()
 {
-    VBEMODEINFOBLOCK* pstVBEMode;
-    int iX1, iY1, iX2, iY2;    
-    COLOR stColor1, stColor2;
-    int i;
-    char* vpcString[] = { "Pixel", "Line", "Rectangle", "Circle", "MINT64 OS~!!!" };
-    COLOR* pstVideoMemory;
-    RECT stScreenArea;
+	VBEMODEINFOBLOCK* pstVBEMode;
+	int iX, iY;
+	COLOR* pstVideoMemory;
+	RECT stScreenArea;
+	int iRelativeX, iRelativeY;
+	BYTE bButton;
 
-    
-    pstVBEMode = kGetVBEModeInfoBlock();
-    
-    
-    stScreenArea.iX1 = 0;
-    stScreenArea.iY1 = 0;
-    stScreenArea.iX2 = pstVBEMode->wXResolution - 1;
-    stScreenArea.iY2 = pstVBEMode->wYResolution - 1;
-    
-    
-    pstVideoMemory = ( COLOR* ) ( ( QWORD )pstVBEMode->dwPhysicalBasePointer & 0xFFFFFFFF );
-    
-    
-    
-    kInternalDrawText( &stScreenArea, pstVideoMemory, 
-            0, 0, RGB( 255, 255, 255), RGB( 0, 0, 0 ), vpcString[ 0 ], 
-            kStrLen( vpcString[ 0 ] ) );
-    
-    kInternalDrawPixel( &stScreenArea, pstVideoMemory, 1, 20, RGB( 255, 255, 255 ) );
-    kInternalDrawPixel( &stScreenArea, pstVideoMemory, 2, 20, RGB( 255, 255, 255 ) );
-    
-    
-    kInternalDrawText( &stScreenArea, pstVideoMemory, 
-            0, 25, RGB( 255, 0, 0), RGB( 0, 0, 0 ), vpcString[ 1 ], 
-            kStrLen( vpcString[ 1 ] ) );
-    
-    kInternalDrawLine( &stScreenArea, pstVideoMemory, 20, 50, 1000, 50, RGB( 255, 0, 0 ) );
-    kInternalDrawLine( &stScreenArea, pstVideoMemory, 20, 50, 1000, 100, RGB( 255, 0, 0 ) );
-    kInternalDrawLine( &stScreenArea, pstVideoMemory, 20, 50, 1000, 150, RGB( 255, 0, 0 ) );
-    kInternalDrawLine( &stScreenArea, pstVideoMemory, 20, 50, 1000, 200, RGB( 255, 0, 0 ) );
-    kInternalDrawLine( &stScreenArea, pstVideoMemory, 20, 50, 1000, 250, RGB( 255, 0, 0 ) );
-    
-    
-    kInternalDrawText( &stScreenArea, pstVideoMemory, 
-            0, 180, RGB( 0, 255, 0), RGB( 0, 0, 0 ), vpcString[ 2 ], 
-            kStrLen( vpcString[ 2 ] ) );
-    
-    kInternalDrawRect( &stScreenArea, pstVideoMemory, 20, 200, 70, 250, RGB( 0, 255, 0 ), FALSE );
-    kInternalDrawRect( &stScreenArea, pstVideoMemory, 120, 200, 220, 300, RGB( 0, 255, 0 ), TRUE );
-    kInternalDrawRect( &stScreenArea, pstVideoMemory, 270, 200, 420, 350, RGB( 0, 255, 0 ), FALSE );
-    kInternalDrawRect( &stScreenArea, pstVideoMemory, 470, 200, 670, 400, RGB( 0, 255, 0 ), TRUE );
-    
-    
-    kInternalDrawText( &stScreenArea, pstVideoMemory, 
-            0, 550, RGB( 0, 0, 255), RGB( 0, 0, 0 ), vpcString[ 3 ], 
-            kStrLen( vpcString[ 3 ] ) );
-    
-    kInternalDrawCircle( &stScreenArea, pstVideoMemory, 45, 600, 25, RGB( 0, 0, 255 ), FALSE ) ;
-    kInternalDrawCircle( &stScreenArea, pstVideoMemory, 170, 600, 50, RGB( 0, 0, 255 ), TRUE ) ;
-    kInternalDrawCircle( &stScreenArea, pstVideoMemory, 345, 600, 75, RGB( 0, 0, 255 ), FALSE ) ;
-    kInternalDrawCircle( &stScreenArea, pstVideoMemory, 570, 600, 100, RGB( 0, 0, 255 ), TRUE ) ;
-    
-    kGetCh();
-    
-    do
-    {
-        // 점 그리기
-        for( i = 0 ; i < 100 ; i++ )
-        {
-            // 임의의 X좌표와 색을 반환
-            kGetRandomXY( &iX1, &iY1 );
-            stColor1 = kGetRandomColor();
-            
-            // 점 그리기
-            kInternalDrawPixel( &stScreenArea, pstVideoMemory, iX1, iY1, stColor1 );
-        }        
-        
-        // 선 그리기
-        for( i = 0 ; i < 100 ; i++ )
-        {
-            kGetRandomXY( &iX1, &iY1 );
-            kGetRandomXY( &iX2, &iY2 );
-            stColor1 = kGetRandomColor();
-            
-            kInternalDrawLine( &stScreenArea, pstVideoMemory, iX1, iY1, iX2, iY2, stColor1 );
-        }
+	pstVBEMode = kGetVBEModeInfoBlock();
 
-        // 사각형 그리기
-        for( i = 0 ; i < 20 ; i++ )
-        {
-            kGetRandomXY( &iX1, &iY1 );
-            kGetRandomXY( &iX2, &iY2 );
-            stColor1 = kGetRandomColor();
+	stScreenArea.iX1 = 0;
+	stScreenArea.iY1 = 0;
+	stScreenArea.iX2 = pstVBEMode->wXResolution - 1;
+	stScreenArea.iY2 = pstVBEMode->wYResolution - 1;
 
-            kInternalDrawRect( &stScreenArea, pstVideoMemory, 
-                    iX1, iY1, iX2, iY2, stColor1, kRandom() % 2 );
-        }
-        
-        // 원 그리기
-        for( i = 0 ; i < 100 ; i++ )
-        {
-            kGetRandomXY( &iX1, &iY1 );
-            stColor1 = kGetRandomColor();
+	pstVideoMemory = (COLOR*) pstVBEMode->dwPhysicalBasePointer;
 
-            kInternalDrawCircle( &stScreenArea, pstVideoMemory, 
-                    iX1, iY1, ABS( kRandom() % 50 + 1 ), stColor1, kRandom() % 2 );
-        }
-        
-        for( i = 0 ; i < 100 ; i++ )
-        {
-            kGetRandomXY( &iX1, &iY1 );
-            stColor1 = kGetRandomColor();
-            stColor2 = kGetRandomColor();
-            
-            kInternalDrawText( &stScreenArea, pstVideoMemory, 
-                    iX1, iY1, stColor1, stColor2, vpcString[ 4 ], 
-                    kStrLen( vpcString[ 4 ] ) );
-        }
-    } while( kGetCh() != 'q' );
-    
-    while( 1 )
-    {
-        kInternalDrawRect( &stScreenArea, pstVideoMemory, 
-                stScreenArea.iX1, stScreenArea.iY1, stScreenArea.iX2,
-                stScreenArea.iY2, RGB( 232, 255, 232 ), TRUE );
+	iX = pstVBEMode->wXResolution / 2;
+	iY = pstVBEMode->wYResolution / 2;
 
-        for( i = 0 ; i < 3 ; i++ )
-        {
-            kGetRandomXY( &iX1, &iY1 );
-            kDrawWindowFrame( iX1, iY1, 400, 200, "MINT64 OS Test Window" );
-        }
+	kInternalDrawRect(&stScreenArea, pstVideoMemory, stScreenArea.iX1, stScreenArea.iY1, 
+					stScreenArea.iX2, stScreenArea.iY2, RGB(232, 255, 232), TRUE);
 
-        kGetCh();
-    }
+	kDrawCursor(&stScreenArea, pstVideoMemory, iX, iY);
+
+	while(1)
+	{
+		if(kGetMouseDataFromMouseQueue(&bButton, &iRelativeX, &iRelativeY) == FALSE)
+		{
+			kSleep(0);
+			continue;
+		}
+		kInternalDrawRect(&stScreenArea, pstVideoMemory, iX, iY, iX + MOUSE_CURSOR_WIDTH, iY + MOUSE_CURSOR_HEIGHT, RGB(232, 255, 232), TRUE);
+
+		iX += iRelativeX;
+		iY += iRelativeY;
+
+		if(iX < stScreenArea.iX1)
+			iX = stScreenArea.iX1;
+		else if(iX > stScreenArea.iX2)
+			iX = stScreenArea.iX2;
+		
+		if(iY < stScreenArea.iY1)
+			iY = stScreenArea.iY1;
+		else if(iY > stScreenArea.iY2)
+			iY = stScreenArea.iY2;
+	
+		if(bButton & MOUSE_LBUTTONDOWN)
+			kDrawWindowFrame(iX - 200 , iY - 100 , 400, 200, "MINT64 OS Test Window");
+		else if(bButton & MOUSE_RBUTTONDOWN)
+		{
+			kInternalDrawRect(&stScreenArea, pstVideoMemory, stScreenArea.iX1, stScreenArea.iY1, 
+						stScreenArea.iX2, stScreenArea.iY2, RGB(232, 255, 232), TRUE);
+		}
+		kDrawCursor(&stScreenArea, pstVideoMemory, iX, iY);
+	}
+
 }
 

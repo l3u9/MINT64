@@ -3,7 +3,7 @@
 SECTION .text
 
 extern kCommonExceptionHandler, kCommonInterruptHandler, kKeyboardHandler
-extern kTimerHandler, kDeviceNotAvailableHandler, kHDDHandler
+extern kTimerHandler, kDeviceNotAvailableHandler, kHDDHandler, kMouseHandler
 
 global kISRDivideError, kISRDebug, kISRNMI, kISRBreakPoint, kISROverflow
 global kISRBoundRangeExceeded, kISRInvalidOpcode, kISRDeviceNotAvailable, kISRDoubleFault,
@@ -368,7 +368,7 @@ kISRMouse:
 
     ; 핸들러에 인터럽트 번호를 삽입하고 핸들러 호출
     mov rdi, 44
-    call kCommonInterruptHandler
+    call kMouseHandler
 
     KLOADCONTEXT    ; 콘텍스트를 복원
     iretq           ; 인터럽트 처리를 완료하고 이전에 수행하던 코드로 복원
