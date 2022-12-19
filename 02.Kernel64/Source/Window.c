@@ -56,7 +56,7 @@ static void kInitializeWindowPool(void)
         gs_stWindowPoolManager.pstStartAddress[i].stLink.qwID = i;
 
     gs_stWindowPoolManager.iMaxCount = WINDOW_MAXCOUNT;
-    gs_stWindowPoolManager.iAllocatedCount = 0;
+    gs_stWindowPoolManager.iAllocatedCount = 1;
 
     kInitializeMutex(&(gs_stWindowPoolManager.stLock));
 }
@@ -256,8 +256,10 @@ BOOL kDeleteAllWindowInTaskID(QWORD qwTaskID)
     while(pstWindow != NULL)
     {
         pstNextWindow = kGetNextFromList(&(gs_stWindowManager.stWindowList), pstWindow);
+        
         if((pstWindow->stLink.qwID != gs_stWindowManager.qwBackgroundWindowID) && (pstWindow->qwTaskID == qwTaskID))
             kDeleteWindow(pstWindow->stLink.qwID);
+        
         pstWindow = pstNextWindow;
     }
     kUnlock(&(gs_stWindowManager.stLock));
@@ -284,6 +286,8 @@ WINDOW* kGetWindowWithWindowLock(QWORD qwWindowID)
     pstWindow = kGetWindow(qwWindowID);
     if(pstWindow == NULL)
         return NULL;
+
+
     kLock(&(pstWindow->stLock));
     pstWindow = kGetWindow(qwWindowID);
     if(pstWindow == NULL)
@@ -340,7 +344,8 @@ BOOL kRedrawWindowByArea(const RECT* pstArea)
 
     kUnlock(&(gs_stWindowManager.stLock));
 
-    kSetRectangleData(gs_stWindowManager.iMouseX, gs_stWindowManager.iMouseY, gs_stWindowManager.iMouseX + MOUSE_CURSOR_WIDTH, 
+    kSetRectangleData(gs_stWindowManager.iMouseX, gs_stWindowManager.iMouseY, 
+                gs_stWindowManager.iMouseX + MOUSE_CURSOR_WIDTH, 
                 gs_stWindowManager.iMouseY + MOUSE_CURSOR_HEIGHT, &stCursorArea);
     if(kIsRectangleOverlapped(&stOverlappedArea, &stCursorArea) == TRUE)
         kDrawCursor(gs_stWindowManager.iMouseX, gs_stWindowManager.iMouseY);
@@ -365,19 +370,19 @@ static void kCopyWindowBufferToFrameBuffer(const WINDOW* pstWindow, const RECT* 
     if(kGetOverlappedRectangle(&stTempArea, &(pstWindow->stArea), &stOverlappedArea) == FALSE)
         return;
     
-    iScreenWidth = kGetRectangleWidth(&(gs_stWindowManager.stScreenArea));
-    iWindowWidth = kGetRectangleHeight(&(pstWindow->stArea));
-    iOverlappedHeight = kGetRectangleWidth(&stOverlappedArea);
-    iOverlappedHeight = kGetRectangleHeight(&stOverlappedArea);
+    iScreenWidth = kGetRectangleWidth( &( gs_stWindowManager.stScreenArea ) );
+    iWindowWidth = kGetRectangleWidth( &( pstWindow->stArea ) );
+    iOverlappedWidth = kGetRectangleWidth( &stOverlappedArea );
+    iOverlappedHeight = kGetRectangleHeight( &stOverlappedArea );
 
     pstCurrentVideoMemoryAddress = gs_stWindowManager.pstVideoMemory + stOverlappedArea.iY1 * iScreenWidth + stOverlappedArea.iX1;
 
     pstCurrentWindowBufferAddress = pstWindow->pstWindowBuffer + 
-            (stOverlappedArea.iY1 - pstWindow->stArea.iY1) * iWindowWidth + (stOverlappedArea.iX1 = pstWindow->stArea.iX1);
+            (stOverlappedArea.iY1 - pstWindow->stArea.iY1) * iWindowWidth + (stOverlappedArea.iX1 - pstWindow->stArea.iX1);
 
     for(i = 0; i < iOverlappedHeight; i++)
     {
-        kMemCpy(pstCurrentVideoMemoryAddress, pstCurrentWindowBufferAddress, iOverlappedWidth + sizeof(COLOR));
+        kMemCpy(pstCurrentVideoMemoryAddress, pstCurrentWindowBufferAddress, iOverlappedWidth * sizeof(COLOR));
 
         pstCurrentVideoMemoryAddress += iScreenWidth;
         pstCurrentWindowBufferAddress += iWindowWidth;
@@ -435,7 +440,8 @@ BOOL kDrawWindowBackground(QWORD qwWindowID)
     else
         iX = 0;
 
-    kInternalDrawRect(&stArea, pstWindow->pstWindowBuffer, iX, iY, iWidth - 1 - iX, iHeight - 1 - iX, WINDOW_COLOR_BACKGROUND, TRUE);
+    kInternalDrawRect(&stArea, pstWindow->pstWindowBuffer, iX, iY, iWidth - 1 - iX, 
+                    iHeight - 1 - iX, WINDOW_COLOR_BACKGROUND, TRUE);
     kUnlock(&(pstWindow->stLock));
     return TRUE;
 }
@@ -667,8 +673,8 @@ void kMoveCursor(int iX, int iY)
 
 void kGetCursorPosition(int* piX, int* piY)
 {
-    *piY = gs_stWindowManager.iMouseX;
-    *piX = gs_stWindowManager.iMouseY;
+    *piX = gs_stWindowManager.iMouseX;
+    *piY = gs_stWindowManager.iMouseY;
 }
 
 BOOL kDrawPixel(QWORD qwWindowID, int iX, int iY, COLOR stColor)
@@ -680,7 +686,8 @@ BOOL kDrawPixel(QWORD qwWindowID, int iX, int iY, COLOR stColor)
     if(pstWindow == NULL)
         return FALSE;
     
-    kSetRectangleData(0, 0, pstWindow->stArea.iX2 - pstWindow->stArea.iX1, pstWindow->stArea.iY2 - pstWindow->stArea. iY1, &stArea);
+    kSetRectangleData(0, 0, pstWindow->stArea.iX2 - pstWindow->stArea.iX1, pstWindow->stArea.iY2 
+                        - pstWindow->stArea. iY1, &stArea);
 
     kInternalDrawPixel(&stArea, pstWindow->pstWindowBuffer, iX, iY, stColor);
 
