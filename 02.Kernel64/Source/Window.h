@@ -5,11 +5,18 @@
 #include "Synchronization.h"
 #include "2DGraphics.h"
 #include "List.h"
+#include "Queue.h"
+#include "Keyboard.h"
 
 #define WINDOW_MAXCOUNT             2048
 #define GETWINDOWOFFSET(x)          ((x) & 0xffffffff)
 #define WINDOW_TITLEMAXLENGTH       40
 #define WINDOW_INVALIDID            0xffffffffffffffff
+#define EVENT_WINDOW_SELECT         8
+#define EVENT_WINDOW_DESELECT       9
+#define EVENT_WINDOW_MOVE           10
+#define EVENT_WINDOW_RESIZE         11
+#define EVENT_WINDOW_CLOSE          12
 
 #define WINDOW_FLAGS_SHOW           0x1
 #define WINDOW_FLAGS_DRAWFRAME      0x2
@@ -19,17 +26,18 @@
 #define WINDOW_TITLEBAR_HEIGHT      21
 #define WINDOW_XBUTTON_SIZE         19
 
-#define WINDOW_COLOR_FRAME                  RGB( 109, 218, 22 )
-#define WINDOW_COLOR_BACKGROUND             RGB( 255, 255, 255 )
-#define WINDOW_COLOR_TITLEBARTEXT           RGB( 255, 255, 255 )
-#define WINDOW_COLOR_TITLEBARBACKGROUND     RGB( 79, 204, 11 )
-#define WINDOW_COLOR_TITLEBARBRIGHT1        RGB( 183, 249, 171 )
-#define WINDOW_COLOR_TITLEBARBRIGHT2        RGB( 150, 210, 140 )
-#define WINDOW_COLOR_TITLEBARUNDERLINE      RGB( 46, 59, 30 )
-#define WINDOW_COLOR_BUTTONBRIGHT           RGB( 229, 229, 229 )
-#define WINDOW_COLOR_BUTTONDARK             RGB( 86, 86, 86 )
-#define WINDOW_COLOR_SYSTEMBACKGROUND       RGB( 232, 255, 232 )
-#define WINDOW_COLOR_XBUTTONLINECOLOR       RGB( 71, 199, 21 )
+#define WINDOW_COLOR_FRAME                      RGB( 109, 218, 22 )
+#define WINDOW_COLOR_BACKGROUND                 RGB( 255, 255, 255 )
+#define WINDOW_COLOR_TITLEBARTEXT               RGB( 255, 255, 255 )
+#define WINDOW_COLOR_TITLEBARACTIVEBACKGROUND   RGB( 79, 204, 11 )
+#define WINDOW_COLOR_TITLEBARINACTIVEBACKGROUND RGB( 55, 135, 11 )
+#define WINDOW_COLOR_TITLEBARBRIGHT1            RGB( 183, 249, 171 )
+#define WINDOW_COLOR_TITLEBARBRIGHT2            RGB( 150, 210, 140 )
+#define WINDOW_COLOR_TITLEBARUNDERLINE          RGB( 46, 59, 30 )
+#define WINDOW_COLOR_BUTTONBRIGHT               RGB( 229, 229, 229 )
+#define WINDOW_COLOR_BUTTONDARK                 RGB( 86, 86, 86 )
+#define WINDOW_COLOR_SYSTEMBACKGROUND           RGB( 232, 255, 232 )
+#define WINDOW_COLOR_XBUTTONLINECOLOR           RGB( 71, 199, 21 )
 
 #define WINDOW_BACKGROUNDWINDOWTITLE        "SYS_BACKGROUND"
 
@@ -40,6 +48,71 @@
 #define MOUSE_CURSOR_OUTER          RGB(79, 204, 11)
 #define MOUSE_CURSOR_INNER          RGB(232, 255, 232)
 
+#define EVENTQUEUE_WINDOWMAXCOUNT           100
+#define EVENTQUEUE_WINDOWMANAGERMAXCOUNT    WINDOW_MAXCOUNT
+
+#define EVENT_UNKNOWN                                   0
+#define EVENT_MOUSE_MOVE                                1
+#define EVENT_MOUSE_LBUTTONDOWN                         2
+#define EVENT_MOUSE_LBUTTONUP                           3
+#define EVENT_MOUSE_RBUTTONDOWN                         4
+#define EVENT_MOUSE_RBUTTONUP                           5
+#define EVENT_MOUSE_MBUTTONDOWN                         6
+#define EVENT_MOUSE_MBUTTONUP                           7
+
+#define EVENT_WINDOW_SELECT                             8
+#define EVENT_WINDOW_DESELECT                           9
+#define EVENT_WINDOW_MOVE                               10
+#define EVENT_WINDOW_RESIZE                             11
+#define EVENT_WINDOW_CLOSE                              12
+
+#define EVENT_KEY_DOWN                                  13
+#define EVENT_KEY_UP                                    14
+
+#define EVENT_WINDOWMANAGER_UPDATESCREENBYID            15
+#define EVENT_WINDOWMANAGER_UPDATESCREENBYWINDOWAREA    16
+#define EVENT_WINDOWMANAGER_UPDATESCREENBYSCREENAREA    17
+
+typedef struct kMouseEventStruct
+{
+    QWORD qwWindowID;
+
+    POINT stPoint;
+    BYTE bButtonStatus;
+}MOUSEEVENT;
+
+typedef struct kKeyEventStruct
+{
+    QWORD qwWindowID;
+
+    BYTE bASCIICode;
+    BYTE bScanCode;
+
+    BYTE bFlags;
+}KEYEVENT;
+
+typedef struct kWindowEventStruct
+{
+    QWORD qwWindowID;
+
+    RECT stArea;
+}WINDOWEVENT;
+
+typedef struct kEventStruct
+{
+    QWORD qwType;
+
+    union {
+        MOUSEEVENT stMouseEvent;
+
+        KEYEVENT stKeyEvent;
+
+        WINDOWEVENT stWindowEvent;
+
+        QWORD vqwData[3];
+    };
+}EVENT;
+
 typedef struct kWindowStruct
 {
     LISTLINK stLink;
@@ -48,6 +121,10 @@ typedef struct kWindowStruct
     COLOR* pstWindowBuffer;
     QWORD qwTaskID;
     DWORD dwFlags;
+
+    QUEUE stEventQueue;
+    EVENT* pstEventBuffer;
+
     char vcWindowTitle[WINDOW_TITLEMAXLENGTH + 1];
 }WINDOW;
 
@@ -74,6 +151,14 @@ typedef struct kWindowManagerStruct
 
     COLOR* pstVideoMemory;
     QWORD qwBackgroundWindowID;
+
+    QUEUE stEventQueue;
+    EVENT* pstEventBuffer;
+
+    BYTE bPreviousButtonStatus;
+
+    QWORD qwMovingWindowID;
+    BOOL bWindowMoveMode;
 }WINDOWMANAGER;
 
 static void kInitializeWindowPool(void);
@@ -92,10 +177,38 @@ WINDOW* kGetWindowWithWindowLock(QWORD qwWindowID);
 BOOL kShowWindow(QWORD qwWindowID, BOOL bShow);
 BOOL kRedrawWindowByArea(const RECT* pstArea);
 static void kCopyWindowBufferToFrameBuffer(const WINDOW* pstWindow, const RECT* pstCopyArea);
+QWORD kFindWindowByPoint(int iX, int iY);
+QWORD kFindWindowByTitle(const char* pcTitle);
+BOOL kIsWindowExist(QWORD qwWIndowID);
+QWORD kGetTopWindowID(void);
+BOOL kMoveWindowToTop(QWORD qwWindowID);
+BOOL kIsInTitleBar(QWORD qwWindowID, int iX, int iY);
+BOOL kIsInCloseButton(QWORD qwWindowID, int iX, int iY);
+BOOL kMoveWindow(QWORD qwWindowID, int iX, int iY);
+static BOOL kUpdateWindowTitle(QWORD qwWindowID, BOOL bSelectedTitle);
+
+BOOL kGetWindowArea(QWORD qwWindowID, RECT* pstArea);
+BOOL kConvertPointScreenToClient( QWORD qwWindowID, const POINT* pstXY, POINT* pstXYInWindow );
+BOOL kConvertPointClientToScreen( QWORD qwWindowID, const POINT* pstXY, POINT* pstXYInScreen );
+BOOL kConvertRectClientToScreen(QWORD qwWindowID, const RECT* pstArea, RECT* pstAreaInScreen);
+BOOL kConvertRectScreenToClient( QWORD qwWindowID, const RECT* pstArea, RECT* pstAreaInWindow );
+
+BOOL kUpdateScreenByID(QWORD qwWindowID);
+BOOL kUpdateScreenByWindowArea(QWORD qwWindowID, const RECT* pstArea);
+BOOL kUpdateScreenByScreenArea(const RECT* pstArea);
+
+BOOL kSendEventToWindow(QWORD qwWindowID, const EVENT* pstEvent);
+BOOL kReceiveEventFromWindowQueue(QWORD qwWindowID, EVENT* pstEvent);
+BOOL kSendEventToWindowManager(const EVENT* pstEvent);
+BOOL kReceiveEventFromWindowManagerQueue(EVENT* pstEvent);
+BOOL kSetMouseEvent(QWORD qwWindowID, QWORD qwEventType, int iMouseX, int iMouseY, BYTE bButtonStatus, EVENT* pstEvent);
+BOOL kSetWindowEvent(QWORD qwWindowID, QWORD qwEventType, EVENT* pstEvent);
+void kSetKeyEvent(QWORD qwWindow, const KEYDATA* pstKeyData, EVENT* pstEvent);
+
 
 BOOL kDrawWindowFrame(QWORD qwWindowID);
 BOOL kDrawWindowBackground(QWORD qwWindowID);
-BOOL kDrawWindowTitle(QWORD qwWindowID, const char* pcTitle);
+BOOL kDrawWindowTitle(QWORD qwWindowID, const char* pcTitle, BOOL bSelectedTitle);
 BOOL kDrawButton(QWORD qwWindowID, RECT* pstButtonArea, COLOR stBackgroundColor, 
         const char* pcText, COLOR stTextColor);
 BOOL kDrawPixel(QWORD qwWindowID, int iX, int iY, COLOR stColor);
