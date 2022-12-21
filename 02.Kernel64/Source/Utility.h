@@ -4,6 +4,7 @@
 
 #include "Types.h"
 #include <stdarg.h>
+#include "VBE.h"
 
 #define MIN(x,y)        (((x) < (y)) ? (x) : (y))
 #define MAX(x,y)        (((x) > (y)) ? (x) : (y))
@@ -26,6 +27,7 @@ int kVSPrintf( char* pcBuffer, const char* pcFormatString, va_list ap );
 QWORD kGetTickCount(void);
 void kSleep(QWORD qwMillisecond);
 void kMemSetWord(void* pvDestination, WORD wData, int iWordSize);
+BOOL kIsGraphicMode(void);
 
 extern volatile QWORD g_qwTickCount;
 
