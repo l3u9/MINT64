@@ -3,6 +3,8 @@
 
 #include "Types.h"
 
+#define WINDOWMANAGER_DATAACCUMULATECOUNT       20
+
 void kStartWindowManager(void);
 BOOL kProcessMouseData(void);
 BOOL kProcessKeyData(void);

@@ -7,6 +7,7 @@
 #include "List.h"
 #include "Queue.h"
 #include "Keyboard.h"
+#include "Utility.h"
 
 #define WINDOW_MAXCOUNT             2048
 #define GETWINDOWOFFSET(x)          ((x) & 0xffffffff)
@@ -72,6 +73,10 @@
 #define EVENT_WINDOWMANAGER_UPDATESCREENBYID            15
 #define EVENT_WINDOWMANAGER_UPDATESCREENBYWINDOWAREA    16
 #define EVENT_WINDOWMANAGER_UPDATESCREENBYSCREENAREA    17
+
+#define WINDOW_OVERLAPPEDAREALOGMAXCOUNT                20
+
+
 
 typedef struct kMouseEventStruct
 {
@@ -159,7 +164,14 @@ typedef struct kWindowManagerStruct
 
     QWORD qwMovingWindowID;
     BOOL bWindowMoveMode;
+    BYTE* pbDrawBitmap;
 }WINDOWMANAGER;
+
+typedef struct kDrawBitmapStruct
+{
+    RECT stArea;
+    BYTE* pbBitmap;
+}DRAWBITMAP;
 
 static void kInitializeWindowPool(void);
 static WINDOW* kAllocateWindow(void);
@@ -175,8 +187,8 @@ BOOL kDeleteAllWindowInTaskID(QWORD qwTaskID);
 WINDOW* kGetWindow(QWORD qwWindowID);
 WINDOW* kGetWindowWithWindowLock(QWORD qwWindowID);
 BOOL kShowWindow(QWORD qwWindowID, BOOL bShow);
-BOOL kRedrawWindowByArea(const RECT* pstArea);
-static void kCopyWindowBufferToFrameBuffer(const WINDOW* pstWindow, const RECT* pstCopyArea);
+BOOL kRedrawWindowByArea(const RECT *pstArea, QWORD qwDrawWindowID);
+static void kCopyWindowBufferToFrameBuffer(const WINDOW *pstWindow, DRAWBITMAP* pstDrawBitmap);
 QWORD kFindWindowByPoint(int iX, int iY);
 QWORD kFindWindowByTitle(const char* pcTitle);
 BOOL kIsWindowExist(QWORD qwWIndowID);
@@ -219,5 +231,11 @@ BOOL kDrawText(QWORD qwWindowID, int iX, int iY, COLOR stTextColor, COLOR stBack
 static void kDrawCursor(int iX, int iY);
 void kMoveCursor(int iX, int iY);
 void kGetCursorPosition(int* piX, int* piY);
+
+BOOL kCreateDrawBitmap(const RECT* pstArea, DRAWBITMAP* pstDrawBitmap);
+static BOOL kFillDrawBitmap(DRAWBITMAP* pstDrawBitmap, RECT* pstArea, BOOL bFill);
+BOOL kGetStartPositionInDrawBitmap(const DRAWBITMAP* pstDrawBitmap, int iX, int iY, int* piByteOffset, int* piBitOffset);
+BOOL kIsDrawBitmapAllOff(const DRAWBITMAP* pstDrawBitmap);
+
 
 #endif
