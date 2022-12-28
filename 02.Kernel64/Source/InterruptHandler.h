@@ -1,34 +1,27 @@
-#ifndef __INTERRUPTHANDLER_H__
-#define __INTERRUPTHANDLER_H__
+#pragma once
 
-#include "Types.h"
 #include "MultiProcessor.h"
+#include "Types.h"
 
-#define INTERRUPT_MAXVECTORCOUNT                16
-#define INTERRUPT_LOADBALANCINGDIVIDOR          10
+#define INTERRUPT_MAXVECTORCOUNT 16
+#define INTERRUPT_LOADBALANCINGDIVIDOR 10
 
-typedef struct kInterruptManagerStruct
-{
-    QWORD vvqwCoreInterruptCount[MAXPROCESSORCOUNT][INTERRUPT_MAXVECTORCOUNT];
-    BOOL bUseLoadBalancing;
-    BOOL bSymmetricIOMode;
-}INTERRUPTMANAGER;
+typedef struct kInterruptManagerStruct {
+  QWORD vvqwCoreInterruptCount[MAXPROCESSORCOUNT][INTERRUPT_MAXVECTORCOUNT];
+  BOOL bUseLoadBalancing;
+  BOOL bSymmetricIOMode;
+} INTERRUPTMANAGER;
 
 void kSetSymmetricIOMode(BOOL bSymmetricIOMode);
 void kSetInterruptLoadBalancing(BOOL bUseLoadBalancing);
 void kIncreaseInterruptCount(int iIRQ);
 void kSendEOI(int iIRQ);
-INTERRUPTMANAGER* kGetInterruptManager(void);
+INTERRUPTMANAGER *kGetInterruptManager(void);
 void kProcessLoadBalancing(int iIRQ);
-
-
 void kCommonExceptionHandler(int iVectorNumber, QWORD qwErrorCode);
-void kCommonInterruptHandlr(int iVectorNumber);
+void kCommonIntteruptHandler(int iVectorNumber);
 void kKeyboardHandler(int iVectorNumber);
 void kTimerHandler(int iVectorNumber);
-void kDeviceNotAvailableHandler(int iVectyorNumber);
+void kDeviceNotAvailableHandler(int iVectorNumber);
 void kHDDHandler(int iVectorNumber);
 void kMouseHandler(int iVectorNumber);
-
-#endif
-

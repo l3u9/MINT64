@@ -1,6 +1,4 @@
-#ifndef __TYPES_H__
-#define __TYPES_H__
-
+#pragma once
 
 #define BYTE unsigned char
 #define WORD unsigned short
@@ -14,16 +12,9 @@
 
 #pragma pack(push, 1)
 
-// Data structure composing text mode screen of video mode
-typedef struct kCharactorStruct
-{
-    BYTE bCharactor;
-    BYTE bAttribute;
+typedef struct kCharactorStruct {
+  BYTE bCharactor;
+  BYTE bAttribute;
 } CHARACTER;
 
-
 #pragma pack(pop)
-#endif /*__TYPES_H__*/
-
-
-

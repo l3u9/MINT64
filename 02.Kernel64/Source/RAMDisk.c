@@ -1,51 +1,53 @@
 #include "RAMDisk.h"
-#include "Utility.h"
 #include "DynamicMemory.h"
+#include "Utility.h"
 
 static RDDMANAGER gs_stRDDManager;
 
-BOOL kInitializeRDD(DWORD dwTotalSectorCount)
-{
-    kMemSet(&gs_stRDDManager, 0, sizeof(gs_stRDDManager));
+BOOL kInitializeRDD(DWORD dwTotalSectorCount) {
+  kMemSet(&gs_stRDDManager, 0, sizeof(gs_stRDDManager));
 
-    gs_stRDDManager.pbBuffer = (BYTE*) kAllocateMemory(dwTotalSectorCount * 512);
-    if(gs_stRDDManager.pbBuffer == NULL)
-        return FALSE;
-    
-    gs_stRDDManager.dwTotalSectorCount = dwTotalSectorCount;
-    kInitializeMutex(&(gs_stRDDManager.stMutex));
+  gs_stRDDManager.pbBuffer = (BYTE *)kAllocateMemory(dwTotalSectorCount * 512);
+  if (gs_stRDDManager.pbBuffer == NULL)
+    return FALSE;
 
-    return TRUE;
+  gs_stRDDManager.dwTotalSectorCount = dwTotalSectorCount;
+  kInitializeMutex(&(gs_stRDDManager.stMutex));
+
+  return TRUE;
 }
 
-BOOL kReadRDDInformation(BOOL bPrimary, BOOL bMaster, HDDINFORMATION* pstHDDInformation)
-{
-    kMemSet(pstHDDInformation, 0, sizeof(HDDINFORMATION));
+BOOL kReadRDDInformation(BOOL bPrimary, BOOL bMaster,
+                         HDDINFORMATION *pstHDDInformation) {
+  kMemSet(pstHDDInformation, 0, sizeof(HDDINFORMATION));
 
-    pstHDDInformation->dwTotalSectors = gs_stRDDManager.dwTotalSectorCount;
-    kMemCpy(pstHDDInformation->vwSerialNumber, "0000-0000", 9);
-    kMemCpy(pstHDDInformation->vwModelNumber, "MINT RAM DISK v1.0", 18);
+  pstHDDInformation->dwTotalSectors = gs_stRDDManager.dwTotalSectorCount;
+  kMemCpy(pstHDDInformation->vwSerialNumber, "0000-0000", 9);
+  kMemCpy(pstHDDInformation->vwModelNumber, "MINT RAM Dsk v1.0", 18);
 
-    return TRUE;
+  return TRUE;
 }
 
-int kReadRDDSector(BOOL bPrimary, BOOL bMaster, DWORD dwLBA, int iSectorCount, char* pcBuffer)
-{
-    int iRealReadCount;
+int kReadRDDSector(BOOL bPrimary, BOOL bMaster, DWORD dwLBA, int iSectorCount,
+                   char *pcBuffer) {
+  int iRealReadCount;
 
-    iRealReadCount = MIN(gs_stRDDManager.dwTotalSectorCount - dwLBA, iSectorCount);
+  iRealReadCount =
+      MIN(gs_stRDDManager.dwTotalSectorCount - dwLBA, iSectorCount);
 
-    kMemCpy(pcBuffer, gs_stRDDManager.pbBuffer + (dwLBA * 512), iRealReadCount * 512);
+  kMemCpy(pcBuffer, gs_stRDDManager.pbBuffer + (dwLBA * 512),
+          iRealReadCount * 512);
 
-    return iRealReadCount;
+  return iRealReadCount;
 }
 
-int kWriteRDDSector(BOOL bPrimary, BOOL bMaster, DWORD dwLBA, int iSectorCount, char* pcBuffer)
-{
-    int iRealWriteCount;
+int kWriteRDDSector(BOOL bPrimary, BOOL bMaster, DWORD dwLBA, int iSectorCount,
+                    char *pcBuffer) {
+  int iRealWriteCount;
+  iRealWriteCount =
+      MIN(gs_stRDDManager.dwTotalSectorCount - dwLBA, iSectorCount);
+  kMemCpy(gs_stRDDManager.pbBuffer + (dwLBA * 512), pcBuffer,
+          iRealWriteCount * 512);
 
-    iRealWriteCount = MIN(gs_stRDDManager.dwTotalSectorCount - dwLBA, iSectorCount);
-    kMemCpy(gs_stRDDManager.pbBuffer + (dwLBA * 512), pcBuffer, iRealWriteCount * 512);
-
-    return iRealWriteCount;
+  return iRealWriteCount;
 }

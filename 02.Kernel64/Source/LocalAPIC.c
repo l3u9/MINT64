@@ -1,57 +1,57 @@
 #include "LocalAPIC.h"
 #include "MPConfigurationTable.h"
 
-QWORD kGetLocalAPICBaseAddress(void)
-{
-    MPCONFIGURATIONTABLEHEADER* pstMPHeader;
+QWORD kGetLocalAPICBaseAddress() {
+  MPCONFIGURATIONTABLEHEADER *pstMPHeader;
 
-    pstMPHeader = kGetMPConfigurationManager()->pstMPConfigurationTableHeader;
-
-    return pstMPHeader->dwMemoryMapIOAddressOfLocalAPIC;
+  pstMPHeader = kGetMPConfigurationManager()->pstMPConfigurationTableHeader;
+  return pstMPHeader->dwMemoryMapIOAddressOfLocalAPIC;
 }
 
-void kEnableSoftwareLocalAPIC(void)
-{
-    QWORD qwLocalAPICBaseAddress;
+void kEnableSoftwareLocalAPIC() {
+  QWORD qwLocalAPICBaseAddress;
 
-    qwLocalAPICBaseAddress = kGetLocalAPICBaseAddress();
+  qwLocalAPICBaseAddress = kGetLocalAPICBaseAddress();
 
-    *(DWORD*) (qwLocalAPICBaseAddress + APIC_REGISTER_SVR) |= 0x100;
+  *(DWORD *)(qwLocalAPICBaseAddress + APIC_REGISTER_SVR) |= 0x100;
+}
+void kSendEOIToLocalAPIC(void) {
+  QWORD qwLocalAPICBaseAddress;
+
+  qwLocalAPICBaseAddress = kGetLocalAPICBaseAddress();
+
+  *(DWORD *)(qwLocalAPICBaseAddress + APIC_REGISTER_EOI) = 0;
 }
 
-void kSendEOIToLocalAPIC(void)
-{
-    QWORD qwLocalAPICBaseAddress;
+void kSetTaskPriority(BYTE bPriority) {
+  QWORD qwLocalAPICBaseAddress;
 
-    qwLocalAPICBaseAddress = kGetLocalAPICBaseAddress();
+  qwLocalAPICBaseAddress = kGetLocalAPICBaseAddress();
 
-    *(DWORD*)(qwLocalAPICBaseAddress + APIC_REGISTER_EOI) = 0;
+  *(DWORD *)(qwLocalAPICBaseAddress + APIC_REGISTER_TASKPRIORITY) = bPriority;
 }
 
-void kSetTaskPriority(BYTE bPriority)
-{
-    QWORD qwLocalAPICBaseAddress;
+void kInitializeLocalVectorTable(void) {
+  QWORD qwLocalAPICBaseAddress;
+  DWORD dwTempValue;
 
-    qwLocalAPICBaseAddress = kGetLocalAPICBaseAddress();
+  qwLocalAPICBaseAddress = kGetLocalAPICBaseAddress();
 
-    *(DWORD*)(qwLocalAPICBaseAddress + APIC_REGISTER_TASKPRIORITY) = bPriority;
-}
+  *(DWORD *)(qwLocalAPICBaseAddress + APIC_REGISTER_TIMER) |=
+      APIC_INTERRUPT_MASK;
 
-void kInitializeLocalVectorTable(void)
-{
-    QWORD qwLocalAPICBaseAddress;
-    DWORD dwTempValue;
-    qwLocalAPICBaseAddress = kGetLocalAPICBaseAddress();
+  *(DWORD *)(qwLocalAPICBaseAddress + APIC_REGISTER_LINT0) |=
+      APIC_INTERRUPT_MASK;
 
-    *(DWORD*)(qwLocalAPICBaseAddress + APIC_REGISTER_TIMER) |= APIC_INTERRUPT_MASK;
+  *(DWORD *)(qwLocalAPICBaseAddress + APIC_REGISTER_LINT1) =
+      APIC_TRIGGERMODE_EDGE | APIC_POLARITY_ACTIVEHIGH | APIC_DELIVERYMODE_NMI;
 
-    *(DWORD*)(qwLocalAPICBaseAddress + APIC_REGISTER_LINT0) |= APIC_INTERRUPT_MASK;
+  *(DWORD *)(qwLocalAPICBaseAddress + APIC_REGISTER_ERROR) |=
+      APIC_INTERRUPT_MASK;
 
-    *(DWORD*)(qwLocalAPICBaseAddress + APIC_REGISTER_LINT1) = APIC_TRIGGERMODE_EDGE | APIC_POLARITY_ACTIVEHIGH | APIC_DELIVERYMODE_NMI;
+  *(DWORD *)(qwLocalAPICBaseAddress +
+             APIC_REGISTER_PERFORMANCEMONITORINGCOUNTER) |= APIC_INTERRUPT_MASK;
 
-    *(DWORD*)(qwLocalAPICBaseAddress + APIC_REGISTER_ERROR)  |= APIC_INTERRUPT_MASK;
-
-    *(DWORD*)(qwLocalAPICBaseAddress + APIC_REGISTER_PERFORMANCEMONITORINGCOUNTER) |= APIC_INTERRUPT_MASK;
-
-    *(DWORD*)(qwLocalAPICBaseAddress + APIC_REGISTER_THERMALSENSOR) |= APIC_INTERRUPT_MASK;
+  *(DWORD *)(qwLocalAPICBaseAddress + APIC_REGISTER_THERMALSENSOR) |=
+      APIC_INTERRUPT_MASK;
 }

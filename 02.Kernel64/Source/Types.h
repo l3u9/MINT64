@@ -1,6 +1,4 @@
-#ifndef __TYPES_H__
-#define __TYPES_H__
-
+#pragma once
 
 #define BYTE unsigned char
 #define WORD unsigned short
@@ -12,20 +10,15 @@
 #define FALSE 0
 #define NULL 0
 
-#define offsetof(TYPE, MEMBER) __builtin_offsetof (TYPE, MEMBER)
+#define offsetof(TYPE, MEMBER) __builtin_offsetof(TYPE, MEMBER)
+#define BTOKB(B) B / 1024
+#define BTOMB(B) B / 1024 / 1024
 
 #pragma pack(push, 1)
 
-// Data structure composing text mode screen of video mode
-typedef struct kCharactorStruct
-{
-    BYTE bCharactor;
-    BYTE bAttribute;
+typedef struct kCharactorStruct {
+  BYTE bCharactor;
+  BYTE bAttribute;
 } CHARACTER;
 
-
 #pragma pack(pop)
-#endif /*__TYPES_H__*/
-
-
-

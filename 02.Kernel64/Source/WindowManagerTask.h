@@ -1,14 +1,9 @@
-#ifndef __WINDOWMANAGERTASK_H__
-#define __WINDOWMANAGERTASK_H__
-
+#pragma once
 #include "Types.h"
 
-#define WINDOWMANAGER_DATAACCUMULATECOUNT       20
+#define WINDOWMANAGER_DATAACCUMULATECOUNT 20
 
-void kStartWindowManager(void);
-BOOL kProcessMouseData(void);
-BOOL kProcessKeyData(void);
-BOOL kProcessEventQueueData(void);
-
-
-#endif
+void kStartWindowManager();
+BOOL kProcessMouseData();
+BOOL kProcessKeyData();
+BOOL kProcessEventQueueData();

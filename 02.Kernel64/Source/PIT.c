@@ -1,51 +1,41 @@
 #include "PIT.h"
+#include "AssemblyUtility.h"
 
-void kInitializePIT(WORD wCount, BOOL bPeriodic)
-{
+void kInitializePIT(WORD wCount, BOOL bPeriodic) {
+  if (bPeriodic == TRUE)
+    kOutPortByte(PIT_PORT_CONTROL, PIT_COUNTER0_PERIODIC);
+
+  else
     kOutPortByte(PIT_PORT_CONTROL, PIT_COUNTER0_ONCE);
 
-    if(bPeriodic == TRUE)
-    {
-        kOutPortByte(PIT_PORT_CONTROL, PIT_COUNTER_PERIODIC);
-    }
-    kOutPortByte(PIT_PORT_COUNTER0, wCount);
-    kOutPortByte(PIT_PORT_COUNTER0, wCount >> 8);
+  kOutPortByte(PIT_PORT_COUNTER0, wCount);
+  kOutPortByte(PIT_PORT_COUNTER0, wCount >> 8);
 }
 
-WORD kReadCounter0(void)
-{
-    BYTE bHighByte, bLowByte;
-    WORD wTemp = 0;
+WORD kReadCounter0() {
+  BYTE bHighByte, bLowByte;
+  WORD wTemp = 0;
 
-    kOutPortByte(PIT_PORT_CONTROL, PIT_COUNTER0_LATCH);
+  kOutPortByte(PIT_PORT_CONTROL, PIT_COUNTER0_LATCH);
 
-    bLowByte = kInPortByte(PIT_PORT_COUNTER0);
-    bHighByte = kInPortByte(PIT_PORT_COUNTER0);
+  bLowByte = kInPortByte(PIT_PORT_COUNTER0);
+  bHighByte = kInPortByte(PIT_PORT_COUNTER0);
 
-    wTemp = bHighByte;
-    wTemp = (wTemp << 8) | bLowByte;
-    return wTemp;
+  wTemp = bHighByte;
+  wTemp = (wTemp << 8) | bLowByte;
+  return wTemp;
 }
 
+void kWaitUsingDirectPIT(WORD wCount) {
+  WORD wLastCounter0;
+  WORD wCurrentCounter0;
 
-void kWaitUsingDirectPIT(WORD wCount)
-{
-    WORD wLastCounter0;
-    WORD wCurrentCounter0;
+  kInitializePIT(0, TRUE);
 
-    kInitializePIT(0, TRUE);
-
-    wLastCounter0 = kReadCounter0();
-    while (1)
-    {
-        wCurrentCounter0 = kReadCounter0();
-        if(((wLastCounter0 - wCurrentCounter0) & 0xffff) >= wCount)
-        {
-            break;
-        }
-    }
+  wLastCounter0 = kReadCounter0();
+  while (1) {
+    wCurrentCounter0 = kReadCounter0();
+    if (((wLastCounter0 - wCurrentCounter0) & 0xFFFF) >= wCount)
+      break;
+  }
 }
-
-
-
-

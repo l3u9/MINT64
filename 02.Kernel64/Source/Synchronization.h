@@ -1,45 +1,37 @@
-#ifndef __SYNCHRONIZATION_H__
-#define __SYNCHRONIZATION_H__
+#pragma once
 
 #include "Types.h"
 
 #pragma pack(push, 1)
 
-typedef struct kMutexStruct
-{
-    volatile QWORD qwTaskID;
-    volatile DWORD dwLockCount;
+typedef struct kMutexStruct {
+  volatile QWORD qwTaskID;
+  volatile DWORD dwLockCount;
 
-    volatile BOOL bLockFlag;
+  volatile BOOL bLockFlag;
 
-    BYTE vbPadding[3];
-}MUTEX;
+  BYTE vbPadding[3];
+} MUTEX;
 
-typedef struct kSpinLockStruct
-{
-    volatile DWORD dwLockCount;
-    volatile BYTE bAPICID;
+typedef struct kSpinLockStruct {
+  volatile DWORD dwLockCount;
+  volatile BYTE bAPICID;
+  volatile BOOL bLockFlag;
 
-    volatile BOOL bLockFlag;
-
-    volatile BOOL bInterruptFlag;
-
-    BYTE vbPadding[1];
-}SPINLOCK;
+  volatile BOOL bInterruptFlag;
+  BYTE vbPadding[1];
+} SPINLOCK;
 
 #pragma pack(pop)
 
 #if 0
-BOOL kLockFroSystemData(void);
-void kUnlockForSystemData(BOOL bInterruptFlag);
+BOOL kLockForSystemData();
+void kUnlockForSystemData( BOOL bInterruptFlag );
 #endif
 
-void kInitializeSpinLock(SPINLOCK* pstSpinLock);
-void kLockForSpinLock(SPINLOCK* pstSpinLock);
-void kUnlockForSpinLock(SPINLOCK* pstSpinLock);
-
-void kInitializeMutex(MUTEX* pstMutex);
-void kLock(MUTEX* pstMutex);
-void kUnlock(MUTEX* pstMutex);
-
-#endif
+void kInitializeMutex(MUTEX *pstMutex);
+void kLock(MUTEX *pstMutex);
+void kUnlock(MUTEX *pstMutex);
+void kInitializeSpinLock(SPINLOCK *pstSpinLock);
+void kLockForSpinLock(SPINLOCK *pstSpinLock);
+void kUnlockForSpinLock(SPINLOCK *pstSpinLock);

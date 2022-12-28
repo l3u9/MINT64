@@ -1,1 +1,1 @@
-kill -6 $(ps -a |grep qemu | awk '{print $1}')
+kill $(ps -a |grep qemu|awk '{print $1}')

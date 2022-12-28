@@ -1,178 +1,171 @@
-#ifndef __MPCONFIGURATIONTABLE__
-#define __MPCONFIGURATIONTABLE__
+
+#pragma once
 
 #include "Types.h"
 
-#define MP_FLOATINGPOINTER_FEATUREBYTE1_USEMPTABLE  0x00
-#define MP_FLOATINGPOINTER_FEATUREBYTE2_PICMODE     0x80
-
-#define MP_ENTRYTYPE_PROCESSOR                      0
-#define MP_ENTRYTYPE_BUS                            1
-#define MP_ENTRYTYPE_IOAPIC                         2
-#define MP_ENTRYTYPE_IOINTERRUPTASSIGNMENT          3
-#define MP_ENTRYTYPE_LOCALINTERRUPTASSIGNMENT       4
-
-#define MP_PROCESSOR_CPUFLAGS_ENABLE            0x01
-#define MP_PROCESSOR_CPUFLAGS_BSP               0x02
-
-#define MP_BUS_TYPESTRING_ISA                   "ISA"
-#define MP_BUS_TYPESTRING_PCI                   "PCI"
-#define MP_BUS_TYPESTRING_PCMCIA                "PCMCIA"
-#define MP_BUS_TYPESTRING_VESALOCALBUS          "VL"
-
-#define MP_INTERRUPTTYPE_INT                    0
-#define MP_INTERRUPTTYPE_NMI                    1
-#define MP_INTERRUPTTYPE_SMI                    2
-#define MP_INTERRUPTTYPE_EXTINT                 3
-
-#define MP_INTERRUPT_FLAGS_CONFORMPOLARITY      0x00
-#define MP_INTERRUPT_FLAGS_ACTIVEHIGH           0x01
-#define MP_INTERRUPT_FLAGS_ACTIVELOW            0x03
-#define MP_INTERRUPT_FLAGS_CONFORMTRIGGER       0x00
-#define MP_INTERRUPT_FLAGS_EDGETRIGGERED        0x04
-#define MP_INTERRUPT_FLAGS_LEVELTRIGGERED       0x0C
+#define MP_FLOATINGPOINTER_FEATUREBYTE1_USEMPTABLE 0x00
+#define MP_FLOATINGPOINTER_FEATUREBYTE2_PICMODE 0x80
+#define MP_ENTRYTYPE_PROCESSOR 0
+#define MP_ENTRYTYPE_BUS 1
+#define MP_ENTRYTYPE_IOAPIC 2
+#define MP_ENTRYTYPE_IOINTERRUPTASSIGNMENT 3
+#define MP_ENTRYTYPE_LOCALINTERRUPTASSIGNMENT 4
+#define MP_PROCESSOR_CPUFLAGS_ENABLE 0x01
+#define MP_PROCESSOR_CPUFLAGS_BSP 0x02
+#define MP_BUS_TYPESTRING_ISA "ISA"
+#define MP_BUS_TYPESTRING_PCI "PCI"
+#define MP_BUS_TYPESTRING_PCMCIA "PCMCIA"
+#define MP_BUS_TYPESTRING_VESALOCALBUS "VL"
+#define MP_INTERRUPTTYPE_INT 0
+#define MP_INTERRUPTTYPE_NMI 1
+#define MP_INTERRUPTTYPE_SMI 2
+#define MP_INTERRUPTTYPE_EXTINT 3
+#define MP_INTERRUPT_FLAGS_CONFORMPOLARITY 0x00
+#define MP_INTERRUPT_FLAGS_ACTIVEHIGH 0x01
+#define MP_INTERRUPT_FLAGS_ACTIVELOW 0x03
+#define MP_INTERRUPT_FLAGS_CONFORMTRIGGER 0x00
+#define MP_INTERRUPT_FLAGS_EDGETRIGGERED 0x04
+#define MP_INTERRUPT_FLAGS_LEVELTRIGGERED 0x0C
 
 #pragma pack(push, 1)
 
-typedef struct kMPFloatingPonterStruct
-{
-    char vcSignature[4];
+typedef struct kMPFloatingPointerStruct {
 
-    DWORD dwMPConfigurationTableAddress;
+  char vcSignature[4];
 
-    BYTE bLength;
+  DWORD dwMPConfigurationTableAddress;
 
-    BYTE bRevision;
+  BYTE bLength;
 
-    BYTE bCheckSum;
+  BYTE bRevision;
 
-    BYTE vbMPFeatureByte[5];
-}MPFLOATINGPOINTER;
+  BYTE bCheckSum;
 
-typedef struct kMPConfigurationTableHeaderStruct
-{
-    char vcSignature[4];
+  BYTE vbMPFeatureByte[5];
+} MPFLOATINGPOINTER;
 
-    WORD wBaseTableLength;
+typedef struct kMPConfigurationTableHeaderStruct {
 
-    BYTE bRevision;
+  char vcSignature[4];
 
-    BYTE bCheckSum;
+  WORD wBaseTableLength;
 
-    char vcOEMIDString[8];
+  BYTE bRevision;
 
-    char vcProductIDString[12];
+  BYTE bCheckSum;
 
-    DWORD dwOEMTablePointerAddress;
+  char vcOEMIDString[8];
 
-    WORD wOEMTableSize;
+  char vcProductIDString[12];
 
-    WORD wEntryCount;
+  DWORD dwOEMTablePointerAddress;
 
-    DWORD dwMemoryMapIOAddressOfLocalAPIC;
+  WORD wOEMTableSize;
 
-    WORD wExtendedTableLength;
+  WORD wEntryCount;
 
-    BYTE bExtendedTableChecksum;
+  DWORD dwMemoryMapIOAddressOfLocalAPIC;
 
-    BYTE bReserved;
-}MPCONFIGURATIONTABLEHEADER;
+  WORD wExtendedTableLength;
 
-typedef struct kProcessorEntryStruct
-{
-    BYTE bEntryType;
+  BYTE bExtendedTableChecksum;
 
-    BYTE bLocalAPICID;
+  BYTE bReserved;
+} MPCONFIGURATIONTABLEHEADER;
 
-    BYTE bLocalAPICVersion;
+typedef struct kProcessorEntryStruct {
 
-    BYTE bCPUFlags;
+  BYTE bEntryType;
 
-    BYTE vbCPUSignature[4];
+  BYTE bLocalAPICID;
 
-    DWORD dwFeatureFlags;
+  BYTE bLocalAPICVersion;
 
-    DWORD vdwReserved[2];
-}PROCESSORENTRY;
+  BYTE bCPUFlags;
 
-typedef struct kBusEntryStruct
-{
-    BYTE bEntryType;
+  BYTE vbCPUSignature[4];
 
-    BYTE bBusID;
+  DWORD dwFeatureFlags;
 
-    char vcBusTypeString[6];
-}BUSENTRY;
+  DWORD vdwReserved[2];
+} PROCESSORENTRY;
 
-typedef struct kIOAPICEntryStruct
-{
-    BYTE bEntryType;
+typedef struct kBusEntryStruct {
 
-    BYTE bIOAPICID;
+  BYTE bEntryType;
 
-    BYTE bIOAPICVersion;
+  BYTE bBusID;
 
-    BYTE bIOAPICFlags;
+  char vcBusTypeString[6];
+} BUSENTRY;
 
-    DWORD dwMemoryMapAddress;
-}IOAPICENTRY;
+typedef struct kIOAPICEntryStruct {
 
-typedef struct kIOInterruptAssugnmentEntryStruct
-{
-    BYTE bEntryType;
-    
-    BYTE bInterruptType;
+  BYTE bEntryType;
 
-    WORD wInterruptFlags;
+  BYTE bIOAPICID;
 
-    BYTE bSourceBUSID;
+  BYTE bIOAPICVersion;
 
-    BYTE bSourceBUSIRQ;
+  BYTE bIOAPICFlags;
 
-    BYTE bDestinationIOAPICID;
+  DWORD dwMemoryMapAddress;
+} IOAPICENTRY;
 
-    BYTE bDestinationIOAPICINTIN;
-}IOINTERRUPTASSIGNMENTENTRY;
+typedef struct kIOInterruptAssignmentEntryStruct {
 
-typedef struct kLocalInterruptEntryStruct
-{
-    BYTE bEntryType;
+  BYTE bEntryType;
 
-    BYTE bInterruptType;
+  BYTE bInterruptType;
 
-    WORD wInterruptFlags;
+  WORD wInterruptFlags;
 
-    BYTE bSourceBusID;
+  BYTE bSourceBUSID;
 
-    BYTE bSourceBusIRQ;
+  BYTE bSourceBUSIRQ;
 
-    BYTE bDestinationLocalAPICID;
+  BYTE bDestinationIOAPICID;
 
-    BYTE bDestinationLocalAPICLINTIN;
-}LOCALINTERRUPTASSIGNMENTENTRY;
+  BYTE bDestinationIOAPICINTIN;
+} IOINTERRUPTASSIGNMENTENTRY;
+
+typedef struct kLocalInterruptEntryStruct {
+
+  BYTE bEntryType;
+
+  BYTE bInterruptType;
+
+  WORD wInterruptFlags;
+
+  BYTE bSourceBUSID;
+
+  BYTE bSourceBUSIRQ;
+
+  BYTE bDestinationLocalAPICID;
+
+  BYTE bDestinationLocalAPICLINTIN;
+} LOCALINTERRUPTASSIGNMENTENTRY;
 
 #pragma pack(pop)
 
-typedef struct kMPConfigurationManagerStruct
-{
-    MPFLOATINGPOINTER* pstMPFloatingPointer;
+typedef struct kMPConfigurationManagerStruct {
 
-    MPCONFIGURATIONTABLEHEADER* pstMPConfigurationTableHeader;
+  MPFLOATINGPOINTER *pstMPFloatingPointer;
 
-    QWORD qwBaseEntryStartAddress;
+  MPCONFIGURATIONTABLEHEADER *pstMPConfigurationTableHeader;
 
-    int iProcessorCount;
+  QWORD qwBaseEntryStartAddress;
 
-    BOOL bUsePICMode;
+  int iProcessorCount;
 
-    BYTE bISABusID;
+  BOOL bUsePICMode;
+
+  BYTE bISABusID;
 } MPCONFIGURATIONMANAGER;
 
-BOOL kFindMPFloatingPointerAddress(QWORD* pstAddress);
-BOOL kAnalysisMPConfigurationTable(void);
-MPCONFIGURATIONMANAGER* kGetMPConfigurationManager(void);
-void kPrintMPConfigurationTable(void);
-int kGetProcessorCount(void);
-IOAPICENTRY* kFindIOAPICEntryForISA(void);
-
-#endif
+BOOL kFindMPFloatingPointerAddress(QWORD *pstAddress);
+BOOL kAnalysisMPConfigurationTable();
+MPCONFIGURATIONMANAGER *kGetMPConfigurationManager();
+void kPrintMPConfigurationTable();
+int kGetProcessorCount();
+IOAPICENTRY *kFindIOAPICEntryForISA();

@@ -1,5 +1,6 @@
 [BITS 64]
 
+
 SECTION .text
 
 global kInPortByte, kOutPortByte, kInPortWord, kOutPortWord
@@ -8,9 +9,8 @@ global kEnableInterrupt, kDisableInterrupt, kReadRFLAGS
 global kReadTSC
 global kSwitchContext, kHlt, kTestAndSet, kPause
 global kInitializeFPU, kSaveFPUContext, kLoadFPUContext, kSetTS, kClearTS
-global kEnableGlobalLocalAPIC,
+global kEnableGlobalLocalAPIC
 
-;포트로부터 1바이트 읽음
 kInPortByte:
     push rdx
 
@@ -19,14 +19,12 @@ kInPortByte:
     in al, dx
 
     pop rdx
-    
     ret
 
-; 포트에 1바이트 씀
 kOutPortByte:
     push rdx
     push rax
-    
+
     mov rdx, rdi
     mov rax, rsi
     out dx, al
@@ -58,7 +56,7 @@ kOutPortWord:
     ret
 
 kLoadGDTR:
-    lgdt [rdi];
+    lgdt [rdi]
     ret
 
 kLoadTR:
@@ -68,7 +66,6 @@ kLoadTR:
 kLoadIDTR:
     lidt [rdi]
     ret
-
 
 kEnableInterrupt:
     sti
@@ -118,9 +115,7 @@ kReadTSC:
     push rax
     push fs
     push gs
-
 %endmacro
-
 
 %macro KLOADCONTEXT 0
     pop gs
@@ -145,38 +140,35 @@ kReadTSC:
     pop rbx
     pop rax
     pop rbp
-
 %endmacro
 
 kSwitchContext:
     push rbp
     mov rbp, rsp
 
-
-    pushfq  ;아래의 cmp 결과로 RFLAGS 레지스터가 변하지 않도록 스택에 저장
+    pushfq
     cmp rdi, 0
     je .LoadContext
+    popfq
 
-    popfq ;스택에 저장한 RFLAGS 레지스터를 복원
-
-    push rax ;CONTEXT 영역의 오프셋으로 사용할 RAX 레지스터를 스택에 저장
+    push rax
 
     mov ax, ss
-    mov qword[rdi + (23 * 8)], rax
-    
+    mov qword[rdi + (23*8)], rax
+
     mov rax, rbp
     add rax, 16
-    mov qword[rdi + (22 * 8)], rax
+    mov qword[rdi + (22*8)], rax
 
-    pushfq ;RFLAGS 레지스터 저장
+    pushfq
     pop rax
-    mov qword[rdi + (21 * 8)], rax
+    mov qword[rdi + (21*8)], rax
 
     mov ax, cs
-    mov qword[rdi + (20 * 8)], rax
+    mov qword[rdi + (20*8)], rax
 
-    mov rax, qword[rbp + 8]
-    mov qword[rdi + (19 * 8)], rax   ;RIP를 리턴 어드레스로 설정
+    mov rax, qword[rbp+8]
+    mov qword[rdi + (19*8)], rax
 
     pop rax
     pop rbp
@@ -187,14 +179,10 @@ kSwitchContext:
 
     KSAVECONTEXT
 
-
 .LoadContext:
     mov rsp, rsi
-
     KLOADCONTEXT
-
     iretq
-    
 
 kHlt:
     hlt
@@ -204,7 +192,7 @@ kHlt:
 kTestAndSet:
     mov rax, rsi
 
-    lock cmpxchg byte[rdi], dl
+    lock cmpxchg byte [rdi], dl
     je .SUCCESS
 
 .NOTSAME:
@@ -213,7 +201,6 @@ kTestAndSet:
 
 .SUCCESS:
     mov rax, 0x01
-
     ret
 
 kInitializeFPU:
@@ -221,7 +208,7 @@ kInitializeFPU:
     ret
 
 kSaveFPUContext:
-    fxsave  [rdi]
+    fxsave [rdi]
     ret
 
 kLoadFPUContext:

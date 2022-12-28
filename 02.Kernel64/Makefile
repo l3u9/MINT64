@@ -1,34 +1,32 @@
 NASM64 = nasm -f elf64
-GCC64 = gcc -c -m64 -ffreestanding
+GCC64 = gcc -c -m64 -ffreestanding -Wno-int-conversion -fgnu89-inline
 LD64 = ld -melf_x86_64 -T ../elf_x86_64.x -nostdlib -e Main -Ttext 0x200000
-
 OBJCOPY64 = objcopy -j .text -j .data -j .rodata -j .bss -S -O binary
 
 OBJECTDIRECTORY = Temp
-SOURCEDIRECTORY	= Source
+SOURCEDIRECTORY = Source
 
 all: prepare Kernel64.bin
 
 prepare:
 	mkdir -p $(OBJECTDIRECTORY)
 
-
 dep:
 	@echo === Make Dependancy File ===
-	make -C $(OBJECTDIRECTORY) -f ../Makefile InternalDependency
+	make -C $(OBJECTDIRECTORY) -f ../makefile InternalDependency
 	@echo === Dependancy Search Complete ===
 
 ExecuteInternalBuild: dep
-	make -C $(OBJECTDIRECTORY) -f ../Makefile Kernel64.elf
+	make -C $(OBJECTDIRECTORY) -f ../makefile Kernel64.elf
 
 Kernel64.bin: ExecuteInternalBuild
 	$(OBJCOPY64) $(OBJECTDIRECTORY)/Kernel64.elf $@
-		
+
 clean:
 	rm -f *.bin
 	rm -f $(OBJECTDIRECTORY)/*.*
 
-ENTRYPOINTSOURCEFILE = ../$(SOURCEDIRECTORY)/EntryPoint.s
+ENTRYPOINTSOURCEFILE = $(wildcard ../$(SOURCEDIRECTORY)/EntryPoint.s)
 ENTRYPOINTOBJECTFILE = EntryPoint.o
 CSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.c)
 ASSEMBLYSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.asm)
@@ -45,11 +43,11 @@ $(ENTRYPOINTOBJECTFILE): $(ENTRYPOINTSOURCEFILE)
 	$(NASM64) -o $@ $<
 
 InternalDependency:
-	$(GCC64) -MM $(CSOURCEFILES) > Dependency.dep
+	$(GCC64) -MM $(CSOURCEFILES) > Dependancy.dep
 
 Kernel64.elf: $(ENTRYPOINTOBJECTFILE) $(COBJECTFILES) $(ASSEMBLYOBJECTFILES)
 	$(LD64) -o $@ $^
 
-ifeq (Dependency.dep, $(wildcard Dependency.dep))
-include Dependency.dep
+ifeq (Dependancy.dep, $(wildcard Dependancy.dep))
+include Dependancy.dep
 endif
