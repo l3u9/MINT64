@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
 
   stSocketAddr.sin_family = AF_INET;
   stSocketAddr.sin_port = htons(4444);
-  stSocketAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  stSocketAddr.sin_addr.s_addr = inet_addr("0.0.0.0");
 
   iSocket = socket(AF_INET, SOCK_STREAM, 0);
   if (connect(iSocket, (struct sockaddr *)&stSocketAddr,

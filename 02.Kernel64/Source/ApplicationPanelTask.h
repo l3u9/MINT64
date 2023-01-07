@@ -5,6 +5,7 @@
 #include "Font.h"
 
 #define APPLICATIONPANEL_HEIGHT             31
+#define APPLICATIONPANEL_TITLE              "SYS_APPLICATIONPANNEL"
 #define APPLICATIONPANEL_CLOCKWIDTH         (8 * FONT_ENGLISHWIDTH)
 
 #define APPLICATIONPANEL_LISTITEMHEIGHT     (FONT_ENGLISHHEIGHT + 4)
@@ -28,11 +29,11 @@ typedef struct kApplicationPanelDataStruct
     BOOL bApplicationWindowVisible;
 }APPLICATIONPANELDATA;
 
-typedef struct kApplicationEntryStruct
+typedef struct kAPPLICATIONENTRYStruct
 {
     char* pcApplicationName;
     void* pvEntryPoint;
-}APPLICATIONENTTY;
+}APPLICATIONENTRY;
 
 void kApplicationPanelGUITask(void);
 

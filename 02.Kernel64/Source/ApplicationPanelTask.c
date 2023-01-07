@@ -3,11 +3,13 @@
 #include "Task.h"
 #include "GUITask.h"
 
-APPLICATIONENTTY gs_vstApplicationTable[] =
+APPLICATIONENTRY gs_vstApplicationTable[] =
 {
     {"Base GUI Task", kBaseGUITask},
     {"Hello World GUI Task", kHelloWorldGUITask},
     {"System Monitor Task", kSystemMonitorTask},
+    {"Console Shell for GUI", kGUIConsoleShellTask},
+    {"Image Viewer", kImageViewerTask},
 };
 
 APPLICATIONPANELDATA gs_stApplicationPanelData;
@@ -43,7 +45,7 @@ static BOOL kCreateApplicationPanelWindow(void)
 
     pstWindowManager = kGetWindowManager();
 
-    qwWindowID = kCreateWindow(0, 0, pstWindowManager->stScreenArea.iX2 + 1, APPLICATIONPANEL_HEIGHT, NULL, APPLICATIONPANEL_LISTTITLE);
+    qwWindowID = kCreateWindow(0, 0, pstWindowManager->stScreenArea.iX2 + 1, APPLICATIONPANEL_HEIGHT, NULL, APPLICATIONPANEL_TITLE);
 
     if(qwWindowID == WINDOW_INVALIDID)
         return FALSE;
@@ -163,6 +165,8 @@ static BOOL kProcessApplicationPanelWindowEvent(void)
                     }
                     kMoveWindowToTop(gs_stApplicationPanelData.qwApplicationListID);
                     kShowWindow(gs_stApplicationPanelData.qwApplicationListID, TRUE);
+                    gs_stApplicationPanelData.bApplicationWindowVisible = TRUE;
+
                 }
                 else
                 {
@@ -194,7 +198,7 @@ static BOOL kCreateApplicationListWindow(void)
     int iWindowWidth;
 
     iMaxNameLength = 0;
-    iCount = sizeof(gs_vstApplicationTable) / sizeof(APPLICATIONENTTY);
+    iCount = sizeof(gs_vstApplicationTable) / sizeof(APPLICATIONENTRY);
     for(i = 0; i < iCount; i++)
     {
         iNameLength = kStrLen(gs_vstApplicationTable[i].pcApplicationName);
@@ -319,7 +323,7 @@ static int kGetMouseOverItemIndex(int iMouseY)
     int iCount;
     int iItemIndex;
 
-    iCount = sizeof(gs_vstApplicationTable) / sizeof(APPLICATIONENTTY);
+    iCount = sizeof(gs_vstApplicationTable) / sizeof(APPLICATIONENTRY);
 
     iItemIndex = iMouseY / APPLICATIONPANEL_LISTITEMHEIGHT;
     if((iItemIndex < 0) || (iItemIndex >= iCount))

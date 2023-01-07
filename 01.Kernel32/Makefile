@@ -16,11 +16,11 @@ $(OBJECTDIRECTORY)/EntryPoint.bin: $(SOURCEDIRECTORY)/EntryPoint.s
 
 dep:
 	@echo === Make Dependancy File ===
-	make -C $(OBJECTDIRECTORY) -f ../makefile InternalDependency
+	make -C $(OBJECTDIRECTORY) -f ../Makefile InternalDependency
 	@echo === Dependancy Search Complete ===
 
 ExecuteInternalBuild: dep
-	make -C $(OBJECTDIRECTORY) -f ../makefile Kernel32.elf
+	make -C $(OBJECTDIRECTORY) -f ../Makefile Kernel32.elf
 
 $(OBJECTDIRECTORY)/Kernel32.elf.bin: ExecuteInternalBuild
 	$(OBJCOPY32) $(OBJECTDIRECTORY)/Kernel32.elf $@

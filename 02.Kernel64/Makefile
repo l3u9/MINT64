@@ -13,11 +13,11 @@ prepare:
 
 dep:
 	@echo === Make Dependancy File ===
-	make -C $(OBJECTDIRECTORY) -f ../makefile InternalDependency
+	make -C $(OBJECTDIRECTORY) -f ../Makefile InternalDependency
 	@echo === Dependancy Search Complete ===
 
 ExecuteInternalBuild: dep
-	make -C $(OBJECTDIRECTORY) -f ../makefile Kernel64.elf
+	make -C $(OBJECTDIRECTORY) -f ../Makefile Kernel64.elf
 
 Kernel64.bin: ExecuteInternalBuild
 	$(OBJCOPY64) $(OBJECTDIRECTORY)/Kernel64.elf $@
