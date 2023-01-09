@@ -193,7 +193,7 @@ PRINTMESSAGE:
     pop bp
     ret
 
-MESSAGE1: db 'MINT64 OS Boot Loader Start by jjangu', 0
+MESSAGE1: db 'MINT64 OS Boot Loader Start by 13u9', 0
 
 DISKERRORMESSAGE: db 'DISK Error!!', 0
 IMAGELOADINGMESSAGE: db 'OS Image Loading.....', 0

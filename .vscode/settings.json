@@ -3,6 +3,7 @@
         "descriptor.h": "c",
         "task.h": "c",
         "utility.h": "c",
-        "keyboard.h": "c"
+        "keyboard.h": "c",
+        "types.h": "c"
     }
 }

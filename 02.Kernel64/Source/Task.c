@@ -6,7 +6,7 @@
 #include "MPConfigurationTable.h"
 #include "MultiProcessor.h"
 #include "Utility.h"
-
+#include "DynamicMemory.h"
 
 static SCHEDULER gs_vstScheduler[MAXPROCESSORCOUNT];
 static TCBPOOLMANAGER gs_stTCBPoolManager;
@@ -89,13 +89,21 @@ TCB *kCreateTask(QWORD qwFlags, void *pvMemoryAddress, QWORD qwMemorySize,
   if (pstTask == NULL)
     return NULL;
 
+  pvStackAddress = kAllocateMemory(TASK_STACKSIZE);
+  if(pvStackAddress == NULL)
+  {
+    kFreeTCB(pstTask->stLink.qwID);
+    return NULL;
+  }
+
   kLockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
 
   pstProcess = kGetProcessByThread(kGetRunningTask(bCurrentAPICID));
 
-  if (pstProcess == NULL) {
+  if(pstProcess == NULL) 
+  {
     kFreeTCB(pstTask->stLink.qwID);
-
+    kFreeMemory(pvStackAddress);
     kUnlockForSpinLock(&(gs_vstScheduler[bCurrentAPICID].stSpinLock));
     return NULL;
   }
@@ -151,16 +159,30 @@ static void kSetUpTask(TCB *pstTCB, QWORD qwFlags, QWORD qwEntryPointAddress,
 
   *(QWORD *)((QWORD)pvStackAddress + qwStackSize - 8) = (QWORD)kExitTask;
 
-  pstTCB->stContext.vqRegister[TASK_CSOFFSET] = GDT_KERNELCODESEGMENT;
-  pstTCB->stContext.vqRegister[TASK_DSOFFSET] = GDT_KERNELDATASEGMENT;
-  pstTCB->stContext.vqRegister[TASK_ESOFFSET] = GDT_KERNELDATASEGMENT;
-  pstTCB->stContext.vqRegister[TASK_FSOFFSET] = GDT_KERNELDATASEGMENT;
-  pstTCB->stContext.vqRegister[TASK_GSOFFSET] = GDT_KERNELDATASEGMENT;
-  pstTCB->stContext.vqRegister[TASK_SSOFFSET] = GDT_KERNELDATASEGMENT;
+  if((qwFlags & TASK_FLAGS_USERLEVEL) == 0)
+  {
+    pstTCB->stContext.vqRegister[TASK_CSOFFSET] = GDT_KERNELCODESEGMENT | SELECTOR_RPL_0;
+    pstTCB->stContext.vqRegister[TASK_DSOFFSET] = GDT_KERNELDATASEGMENT | SELECTOR_RPL_0;
+    pstTCB->stContext.vqRegister[TASK_ESOFFSET] = GDT_KERNELDATASEGMENT | SELECTOR_RPL_0;
+    pstTCB->stContext.vqRegister[TASK_FSOFFSET] = GDT_KERNELDATASEGMENT | SELECTOR_RPL_0;
+    pstTCB->stContext.vqRegister[TASK_GSOFFSET] = GDT_KERNELDATASEGMENT | SELECTOR_RPL_0;
+    pstTCB->stContext.vqRegister[TASK_SSOFFSET] = GDT_KERNELDATASEGMENT | SELECTOR_RPL_0;
+  }
+  else
+  {
+    pstTCB->stContext.vqRegister[TASK_CSOFFSET] = GDT_USERCODESEGMENT | SELECTOR_RPL_3;
+    pstTCB->stContext.vqRegister[TASK_DSOFFSET] = GDT_USERDATASEGMENT | SELECTOR_RPL_3;
+    pstTCB->stContext.vqRegister[TASK_ESOFFSET] = GDT_USERDATASEGMENT | SELECTOR_RPL_3;
+    pstTCB->stContext.vqRegister[TASK_FSOFFSET] = GDT_USERDATASEGMENT | SELECTOR_RPL_3;
+    pstTCB->stContext.vqRegister[TASK_GSOFFSET] = GDT_USERDATASEGMENT | SELECTOR_RPL_3;
+    pstTCB->stContext.vqRegister[TASK_SSOFFSET] = GDT_USERDATASEGMENT | SELECTOR_RPL_3;
+  }
+
+
 
   pstTCB->stContext.vqRegister[TASK_RIPOFFSET] = qwEntryPointAddress;
 
-  pstTCB->stContext.vqRegister[TASK_RFLAGSOFFSET] |= 0x0200;
+  pstTCB->stContext.vqRegister[TASK_RFLAGSOFFSET] |= 0x3200;
 
   pstTCB->pvStackAddress = pvStackAddress;
   pstTCB->qwStackSize = qwStackSize;
@@ -817,6 +839,7 @@ void kIdleTask(void) {
 
         qwTaskID = pstTask->stLink.qwID;
         kFreeTCB(qwTaskID);
+        kFreeMemory(pstTask->pvStackAddress);
         kPrintf("IDLE: Task ID[0x%q] is completely ended.\n", qwTaskID);
       }
     }

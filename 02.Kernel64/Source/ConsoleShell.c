@@ -184,7 +184,7 @@ static void kHelp(const char *pcCommandBuffer) {
   int iLength, iMaxCommandLength = 0;
 
   kPrintf("=========================================================\n");
-  kPrintf("||                  JJANGU Shell Help                  ||\n");
+  kPrintf("||                  13u9 Shell Help                  ||\n");
   kPrintf("=========================================================\n");
 
   iCount = sizeof(gs_vstCommandTable) / sizeof(SHELLCOMMANDENTRY);
