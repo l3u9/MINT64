@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __TYPES_H__
+#define __TYPES_H__
 
 #define BYTE unsigned char
 #define WORD unsigned short
@@ -149,7 +150,7 @@ typedef WORD COLOR;
 #define FONT_ENGLISHHEIGHT 16
 
 #define MIN( x, y ) ( ( ( x ) < ( y ) ) ? ( x ) : ( y ) )
-#define MAX( x, y ) ( ( ( x ) > ( y ) ) ? ( x ) : ( y
+#define MAX( x, y ) ( ( ( x ) > ( y ) ) ? ( x ) : ( y))
 
 #pragma pack( push, 1 )
 
@@ -334,3 +335,4 @@ typedef struct{
     int bit_remain;
  
 }JPEG;
+#endif

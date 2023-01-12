@@ -1,11 +1,3 @@
-/**
- *  file    UserLibrary.c
- *  date    2009/12/13
- *  author  kkamagui 
- *          Copyright(c)2008 All rights reserved by kkamagui
- *  brief   유저 레벨에서 사용하는 라이브러리에 관련된 소스 파일
- */
-
 #include "Types.h"
 #include "UserLibrary.h"
 #include <stdarg.h>
@@ -606,19 +598,18 @@ int GetRectangleHeight( const RECT* pstArea )
 /**
  *  영역 1과 영역 2의 겹치는 영역을 반환
  */
-BOOL GetOverlappedRectangle( const RECT* pstArea1, const RECT* pstArea2,
-        RECT* pstIntersection  )
+BOOL GetOverlappedRectangle( const RECT* pstArea1, const RECT* pstArea2, RECT* pstIntersection  )
 {
     int iMaxX1;
     int iMinX2;
     int iMaxY1;
     int iMinY2;
 
-    // X축의 시작점은 두 점 중에서 큰 것을 찾음
+
     iMaxX1 = MAX( pstArea1->iX1, pstArea2->iX1 );
-    // X축의 끝점은 두 점 중에서 작은 것을 찾음
+
     iMinX2 = MIN( pstArea1->iX2, pstArea2->iX2 );
-    // 계산한 시작점의 위치가 끝점의 위치보다 크다면 두 사각형은 겹치지 않음
+
     if( iMinX2 < iMaxX1 )
     {
         return FALSE;

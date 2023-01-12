@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __SYSTEMCALLLIST_H__
+#define __SYSTEMCALLLIST_H__
 
 #include "Types.h"
 #include "SystemCallList.h"
@@ -34,7 +35,7 @@ DIR* opendir( const char* pcDirectoryName );
 struct dirent* readdir( DIR* pstDirectory );
 BOOL rewinddir( DIR* pstDirectory );
 int closedir( DIR* pstDirectory );
-BOOL IsFileOpened( const dirent* pstEntry );
+BOOL IsFileOpened( const struct dirent* pstEntry );
 
 int ReadHDDSector( BOOL bPrimary, BOOL bMaster, DWORD dwLBA, int iSectorCount,
  char* pcBuffer );
@@ -98,3 +99,5 @@ void ClearSerialFIFO( void );
 QWORD GetTotalRAMSize( void );
 QWORD GetTickCount( void );
 void Sleep( QWORD qwMillisecond );
+
+#endif
