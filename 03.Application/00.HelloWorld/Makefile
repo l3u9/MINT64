@@ -9,26 +9,40 @@ OBJCOPY64 = objcopy -j .text -j .data -j .rodata -j .bss
 OBJECTDIRECTORY = Temp
 SOURCEDIRECTORY = Source
 
+################################################################################
+# 빌드 항목 및 빌드 방법 설정
+################################################################################
+# 기본적으로 빌드를 수행할 목록
 all: prepare Output.elf
 
+# 오브젝트 파일이 위치할 디렉터리를 생성
 prepare:
 	mkdir -p $(OBJECTDIRECTORY)
-	
-dep:
-	@echo === Make Dependency File ===
-	make -C $(OBJECTDIRECTORY) -f ../Makefile InternalDependency
-	@echo === Dependency Search Complete ===
 
+
+# 커널의 C 소스 파일에 대한 의존성 정보 생성
+dep:
+	@echo === Make Dependancy File ===
+	make -C $(OBJECTDIRECTORY) -f ../Makefile InternalDependency
+	@echo === Dependancy Search Complete ===
+
+# 디렉터리를 오브젝트 파일 디렉터리로 이동해서 의존성 파일 및 실행 파일을 생성
 ExecuteInternalBuild: dep
 	make -C $(OBJECTDIRECTORY) -f ../Makefile Main.elf
 
+# 커널 이미지를 바이너리 파일로 변환하여 IA-32e 모드 바이너리 생성
 Output.elf: ExecuteInternalBuild
 	$(OBJCOPY64) $(OBJECTDIRECTORY)/Main.elf $@
-
+		
+# 소스 파일을 제외한 나머지 파일 정리	
 clean:
 	rm -f *.elf
 	rm -f $(OBJECTDIRECTORY)/*.*
 
+################################################################################
+# Make에 의해 다시 호출되는 부분, Temp 디렉터리를 기준으로 수행됨
+################################################################################
+# 빌드할 C 소스 파일 정의, Temp 디렉터리를 기준으로 설정
 CSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.c)
 ASSEMBLYSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.asm)
 COBJECTFILES = $(notdir $(patsubst %.c,%.o,$(CSOURCEFILES)))

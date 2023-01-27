@@ -1,23 +1,44 @@
 #include "SystemCallLibrary.h"
 
-int ConsolePrintString(const char* pcBuffer)
+//==============================================================================
+//  콘솔 I/O 관련
+//==============================================================================
+/**
+ *  콘솔에 문자열을 출력
+ *      printf() 함수 내부에서 사용 
+ *      \n, \t와 같은 문자가 포함된 문자열을 출력한 후, 화면상의 다음 출력할 위치를 
+ *      반환
+ */
+int ConsolePrintString( const char* pcBuffer )
 {
     PARAMETERTABLE stParameter;
+    
+    // 파라미터 삽입
+    PARAM( 0 ) = ( QWORD ) pcBuffer;
 
-    PARAM(0) = (QWORD) pcBuffer;
-
-    return ExecuteSystemCall(SYSCALL_CONSOLEPRINTSTRING, &stParameter);
+    // 시스템 콜 호출
+    return ExecuteSystemCall( SYSCALL_CONSOLEPRINTSTRING, &stParameter );
 }
 
-BOOL SetCursor(int iX, int iY)
+/**
+ *  커서의 위치를 설정
+ *      문자를 출력할 위치도 같이 설정
+ */
+BOOL SetCursor( int iX, int iY )
 {
     PARAMETERTABLE stParameter;
+    
+    // 파라미터 삽입
+    PARAM( 0 ) = ( QWORD ) iX;
+    PARAM( 1 ) = ( QWORD ) iY;
 
-    PARAM(0) = (QWORD) iX;
-    PARAM(1) = (QWORD) iY;
+    // 시스템 콜 호출
     return ExecuteSystemCall( SYSCALL_SETCURSOR, &stParameter );
 }
 
+/**
+ *  현재 커서의 위치를 반환
+ */
 BOOL GetCursor( int *piX, int *piY )
 {
     PARAMETERTABLE stParameter;
@@ -423,29 +444,40 @@ BOOL ChangeProcessorAffinity( QWORD qwTaskID, BYTE bAffinity )
     return ( BOOL ) ExecuteSystemCall( SYSCALL_CHANGEPROCESSORAFFINITY, &stParameter );      
 }
 
-QWORD ExecuteProgram(const char* pcFileName, const char* pcArgumentString, BYTE bAffinity)
+/**
+ *  응용프로그램 생성
+ */
+QWORD ExecuteProgram( const char* pcFileName, const char* pcArgumentString, 
+        BYTE bAffinity )
 {
     PARAMETERTABLE stParameter;
-
-    PARAM(0) = (QWORD) pcFileName;
-    PARAM(1) = (QWORD) pcArgumentString;
-    PARAM(2) = (QWORD) bAffinity;
-
-    return ExecuteSystemCall(SYSCALL_EXECUTEPROGRAM, &stParameter);
+    
+    // 파라미터 삽입
+    PARAM( 0 ) = ( QWORD ) pcFileName;
+    PARAM( 1 ) = ( QWORD ) pcArgumentString;
+    PARAM( 2 ) = ( QWORD ) bAffinity;
+    
+    // 시스템 콜 호출
+    return ExecuteSystemCall( SYSCALL_EXECUTEPROGRAM, &stParameter );
 }
 
-QWORD CreateThread(QWORD qwEntryPoint, QWORD qwArgument, BYTE bAffinity)
+/**
+ *  스레드 생성
+ */
+QWORD CreateThread( QWORD qwEntryPoint, QWORD qwArgument, BYTE bAffinity ) 
 {
     PARAMETERTABLE stParameter;
-
-    PARAM(0) = (QWORD) qwEntryPoint;
-    PARAM(1) = (QWORD) qwArgument;
-    PARAM(2) = (QWORD) bAffinity;
-    PARAM(3) = (QWORD) exit;
-
-    return ExecuteSystemCall(SYSCALL_EXECUTEPROGRAM, &stParameter);
+    
+    // 파라미터 삽입
+    PARAM( 0 ) = ( QWORD ) qwEntryPoint;
+    PARAM( 1 ) = ( QWORD ) qwArgument;
+    PARAM( 2 ) = ( QWORD ) bAffinity;
+    // 종료할 때 호출되는 함수에 exit를 지정하여 스레드가 스스로 종료하도록 함
+    PARAM( 3 ) = ( QWORD ) exit;
+    
+    // 시스템 콜 호출
+    return ExecuteSystemCall( SYSCALL_EXECUTEPROGRAM, &stParameter );
 }
-
 
 //==============================================================================
 // GUI 시스템 관련

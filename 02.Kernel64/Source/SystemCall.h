@@ -1,4 +1,3 @@
-#pragma once
 #include "Types.h"
 
 #define SYSTEMCALL_MAXPARAMETERCOUNT    20
