@@ -228,7 +228,7 @@ void CalculateFileOffsetOfLine(int iWidth, int iHeight, TEXTINFO* pstInfo)
         }
     }
 
-    pstInfo->iMaxLineCount;
+    pstInfo->iMaxLineCount = iLineIndex;
 }
 
 BOOL DrawTextBuffer(QWORD qwWindowID, TEXTINFO* pstInfo)
