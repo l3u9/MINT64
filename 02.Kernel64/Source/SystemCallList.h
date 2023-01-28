@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __SYSTEMCALLLIST_H__
+#define __SYSTEMCALLLIST_H__
 
 #define SYSCALL_CONSOLEPRINTSTRING      0
 #define SYSCALL_SETCURSOR               1
@@ -84,3 +85,5 @@
 #define SYSCALL_SLEEP                       72
 #define SYSCALL_ISGRAPHICMODE               73
 #define SYSCALL_TEST                        0xFFFFFFFF
+
+#endif

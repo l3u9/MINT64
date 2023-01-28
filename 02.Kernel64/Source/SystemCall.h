@@ -1,3 +1,6 @@
+#ifndef __SYSTEMCALL_H__
+#define __SYSTEMCALL_H__
+
 #include "Types.h"
 
 #define SYSTEMCALL_MAXPARAMETERCOUNT    20
@@ -18,3 +21,5 @@ QWORD kProcessSystemCall(QWORD qwServiceNumber, PARAMETERTABLE* pstParameter);
 
 void kSystemCallTestTask(void);
 
+
+#endif

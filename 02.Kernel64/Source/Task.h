@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __TASK_H__
+#define __TASK_H__
 
 #include "List.h"
 #include "Synchronization.h"
@@ -177,3 +178,5 @@ void kHaltProcessorByLoad(BYTE bAPICID);
 
 QWORD kGetLastFPUUsedTaskID(BYTE bAPICID);
 void kSetLastFPUUsedTaskID(BYTE bAPICID, QWORD qwTaskID);
+
+#endif

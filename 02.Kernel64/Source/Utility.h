@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __UTILITY_H__
+#define __UTILITY_H__
 
 #include "Types.h"
 #include <stdarg.h>
@@ -28,3 +29,5 @@ int kVSPrintf(char *pcBuffer, const char *pcFormatString, va_list ap);
 void kSleep(QWORD qwMillisecond);
 inline void kMemSetWord(void *pvDestination, WORD wData, int iWordSize);
 BOOL kIsGraphicMode();
+
+#endif

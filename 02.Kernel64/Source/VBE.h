@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __VBE_H__
+#define __VBE_H__
 
 #include "Types.h"
 
@@ -57,3 +58,5 @@ typedef struct kVBEInfoBlockStruct {
 #pragma pack(pop)
 
 VBEMODEINFOBLOCK *kGetVBEModeInfoBlock();
+
+#endif

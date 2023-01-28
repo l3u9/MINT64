@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __WINDOWS_H__
+#define __WINDOWS_H__
 
 #include "2DGraphics.h"
 #include "Keyboard.h"
@@ -231,3 +232,5 @@ BOOL kBitBlt(QWORD qwWindowID, int iX, int iY, COLOR* pstBuffer, int iWidth, int
 void kDrawBackgroundImage(void);
 BOOL kResizeWindow(QWORD qwWindowID, int iX, int iY, int iWidth, int iHeight);
 BOOL kIsInResizeButton(QWORD qwWindowID, int iX, int iY);
+
+#endif

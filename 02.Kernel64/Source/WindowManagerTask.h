@@ -1,4 +1,6 @@
-#pragma once
+#ifndef __WINDOWMANAGERTASK_H__
+#define __WINDOWMANAGERTASK_H__
+
 #include "Types.h"
 #include "Window.h"
 
@@ -12,3 +14,5 @@ BOOL kProcessMouseData();
 BOOL kProcessKeyData();
 BOOL kProcessEventQueueData();
 void kDrawResizeMarker(const RECT* pstArea, BOOL bShowMarker);
+
+#endif
