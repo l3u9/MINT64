@@ -5,7 +5,11 @@
 #define CONSOLESHELL_MAXCOMMANDBUFFERCOUNT 300
 #define CONSOLESHELL_PROMPTMESSAGE "l3u9> "
 
+#define MAXFILENAMELENGTH   24
+
 typedef void (*CommandFunction)(const char *pcParameter);
+
+#define PACKAGESIGNATURE    "MINT64OSPACKAGE "
 
 #pragma pack(push, 1)
 
@@ -20,6 +24,23 @@ typedef struct kParameterListStruct {
   int iLength;
   int iCurrentPosition;
 } PARAMETERLIST;
+
+typedef struct PackageItemStruct
+{
+  char vcFileName[MAXFILENAMELENGTH];
+
+  DWORD dwFileLength;
+}PACKAGEITEM;
+
+typedef struct PackageHeaderStruct
+{
+  char vcSignature[16];
+
+  DWORD dwHeaderSize;
+
+  PACKAGEITEM vstItem[0];
+}PACKAGEHEADER;
+
 
 #pragma pack(pop)
 void kStartConsoleShell();
@@ -77,3 +98,4 @@ static void kChangeTaskAffinity(const char *pcParameterBuffer);
 static void kShowVBEModeInfo(const char *pcParameterBuffer);
 static void kTestSystemCall(const char *pcParameterBuffer);
 static void kExecuteApplicationProgram(const char *pcParameterBuffer);
+static void kInstallPackage(const char* pcParameterBuffer);
