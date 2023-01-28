@@ -39,7 +39,7 @@ int Main(char* pcArgument)
     iHeight = 500;
     iX = (GetRectangleWidth(&stScreenArea) - iWidht) / 2;
     iY = (GetRectangleHeight(&stScreenArea) - iHeight) / 2;
-    qwWindowID = CreateWindow(iX, iY, iWidht, iHeight, WINDOW_FLAGS_DEFAULT | WINDOW_FLAGS_RESIZABLE, "í•œê¸€ ë·°ì–´(Hangul viewer)");
+    qwWindowID = CreateWindow(iX, iY, iWidht, iHeight, WINDOW_FLAGS_DEFAULT | WINDOW_FLAGS_RESIZABLE, "ÇÑ±Û ºä¾î(Hangul viewer)");
 
     CalculateFileOffsetOfLine(iWidht, iHeight, &stInfo);
     stInfo.iCurrentLineIndex = 0;
@@ -269,7 +269,7 @@ BOOL DrawTextBuffer(QWORD qwWindowID, TEXTINFO* pstInfo)
 
     iWidth = GetRectangleWidth(&stWindowArea);
     DrawRect(qwWindowID, 2, iYOffset, iWidth - 3, WINDOW_TITLEBAR_HEIGHT * 2, RGB(55, 215, 47), TRUE);
-    sprintf(vcBuffer, "íŒŒì¼: %s, í–‰ ë²ˆí˜¸: %d/%d\n", pstInfo->vcFileName, pstInfo->iCurrentLineIndex + 1, 
+    sprintf(vcBuffer, "ÆÄÀÏ: %s, Çà ¹øÈ£: %d/%d\n", pstInfo->vcFileName, pstInfo->iCurrentLineIndex + 1, 
         pstInfo->iMaxLineCount);
     
     iLength = strlen(vcBuffer);

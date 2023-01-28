@@ -1,2 +1,2 @@
 english test: test test test
-hangul test : 테스트 테스트 테스트
+hangul test : �׽�Ʈ �׽�Ʈ �׽�Ʈ
